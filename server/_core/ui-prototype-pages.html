@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>معالج الصوت — الصفحات الكاملة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080810;--surface:#10101e;--card:#16162a;--card2:#1c1c30;
+  --border:#ffffff0f;--border-md:#ffffff18;--border-hi:#ffffff28;
+  --accent:#7c6ef8;--accent2:#a78bfa;--accent3:#38bdf8;
+  --success:#34d399;--warning:#fbbf24;--danger:#f87171;
+  --text:#f1f5f9;--muted:#64748b;--muted2:#94a3b8;
+  --glow:#7c6ef830;--r:16px;--r-sm:10px;--tr:0.25s cubic-bezier(.4,0,.2,1);
+}
+html{font-family:'Cairo',sans-serif;font-size:15px}
+body{background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden}
+
+/* ── Layout Shell ─────────────────────────────────────────────────────── */
+.app-shell{display:flex;height:100vh;overflow:hidden}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────── */
+.sidebar{
+  width:220px;flex-shrink:0;background:var(--surface);
+  border-left:1px solid var(--border);display:flex;flex-direction:column;
+  transition:width var(--tr);z-index:10;
+}
+.sidebar.collapsed{width:64px}
+.sidebar-logo{
+  padding:18px 16px 14px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.logo-mark{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#6d5ef0,#8b5cf6);
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.logo-text{font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden}
+.logo-sub{font-size:10px;color:var(--muted);white-space:nowrap}
+.collapse-btn{
+  margin-right:auto;width:24px;height:24px;border-radius:6px;
+  background:var(--card);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:12px;color:var(--muted);flex-shrink:0;
+  transition:all var(--tr);
+}
+.collapse-btn:hover{color:var(--text);border-color:var(--border-md)}
+
+.nav{flex:1;padding:12px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;
+  border-radius:var(--r-sm);cursor:pointer;
+  transition:all var(--tr);color:var(--muted2);white-space:nowrap;
+  position:relative;
+}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:#7c6ef815;color:var(--accent2);border:1px solid #7c6ef830}
+.nav-icon{font-size:18px;flex-shrink:0;width:24px;text-align:center}
+.nav-label{font-size:13px;font-weight:600;overflow:hidden}
+.nav-badge{
+  margin-right:auto;background:#f8717120;color:var(--danger);
+  border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;
+  flex-shrink:0;
+}
+.nav-sep{height:1px;background:var(--border);margin:6px 4px}
+.sidebar.collapsed .nav-label,.sidebar.collapsed .logo-text,.sidebar.collapsed .logo-sub,
+.sidebar.collapsed .nav-badge,.sidebar.collapsed .collapse-btn{display:none}
+.sidebar.collapsed .nav-item{justify-content:center}
+.sidebar.collapsed .logo-mark{margin:auto}
+.sidebar.collapsed .sidebar-logo{justify-content:center}
+
+.sidebar-footer{padding:12px 8px;border-top:1px solid var(--border);flex-shrink:0}
+.user-row{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;
+  border-radius:var(--r-sm);cursor:pointer;transition:background var(--tr);
+}
+.user-row:hover{background:var(--card)}
+.user-avatar{
+  width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2d1f6e,#1e3a5f);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
+}
+.user-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden}
+.user-plan{font-size:10px;color:var(--muted);white-space:nowrap}
+
+/* ── Main Content ─────────────────────────────────────────────────────── */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+
+/* Top bar per page */
+.page-topbar{
+  height:56px;display:flex;align-items:center;
+  padding:0 24px;gap:16px;border-bottom:1px solid var(--border);
+  background:var(--surface);flex-shrink:0;
+}
+.page-title{font-size:17px;font-weight:800}
+.page-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.spacer{flex:1}
+
+.btn{
+  height:36px;border-radius:var(--r-sm);padding:0 16px;
+  font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;border:none;transition:all var(--tr);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn.primary{background:linear-gradient(135deg,#6d5ef0,#8b5cf6);color:white;box-shadow:0 4px 16px var(--glow)}
+.btn.primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px #7c6ef850}
+.btn.ghost{background:var(--card);border:1px solid var(--border);color:var(--muted2)}
+.btn.ghost:hover{color:var(--text);border-color:var(--border-md)}
+.btn.danger-ghost{background:transparent;border:1px solid #f8717130;color:var(--danger)}
+.btn.danger-ghost:hover{background:#f8717110}
+
+/* ── Page Container ───────────────────────────────────────────────────── */
+.page{display:none;flex:1;overflow-y:auto;padding:24px}
+.page.active{display:block}
+
+/* ─────────────────────────────────────────────────────────────────────
+   PAGE: DASHBOARD
+───────────────────────────────────────────────────────────────────── */
+.welcome-banner{
+  background:linear-gradient(135deg,#1a1040 0%,#0f1a2e 60%,#0a1520 100%);
+  border:1px solid #7c6ef830;border-radius:24px;padding:32px;
+  margin-bottom:24px;position:relative;overflow:hidden;
+}
+.welcome-banner::before{
+  content:'';position:absolute;top:-40px;left:-40px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(#7c6ef820,transparent 70%);
+}
+.welcome-title{font-size:24px;font-weight:900;margin-bottom:6px}
+.welcome-sub{font-size:14px;color:var(--muted2);line-height:1.6;max-width:460px}
+.welcome-actions{display:flex;gap:10px;margin-top:20px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 20px;
+}
+.stat-icon{font-size:22px;margin-bottom:10px}
+.stat-num{font-size:26px;font-weight:900;color:var(--text)}
+.stat-label{font-size:12px;color:var(--muted);margin-top:3px}
+.stat-trend{font-size:11px;color:var(--success);margin-top:6px;font-weight:600}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:14px;font-weight:700;color:var(--text)}
+.section-link{font-size:12px;color:var(--accent2);cursor:pointer}
+
+.quick-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.quick-card{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:var(--r);padding:20px 16px;cursor:pointer;
+  transition:all var(--tr);text-align:center;
+}
+.quick-card:hover{border-color:var(--border-hi);background:var(--card2);transform:translateY(-2px)}
+.quick-card.featured{border-color:#7c6ef830;background:linear-gradient(135deg,#16162a,#1a1535)}
+.quick-card.featured:hover{border-color:var(--accent)}
+.qc-icon{font-size:32px;margin-bottom:12px}
+.qc-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.qc-sub{font-size:11px;color:var(--muted);line-height:1.5}
+
+.recent-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.recent-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 16px;cursor:pointer;
+  transition:all var(--tr);display:flex;align-items:center;gap:12px;
+}
+.recent-card:hover{border-color:var(--border-md);background:var(--card2)}
+.rc-icon{
+  width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,#1a1535,#0f1a2e);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.rc-name{font-size:13px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-meta{font-size:11px;color:var(--muted);display:flex;gap:8px}
+.rc-ops{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.op-chip{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:6px;padding:2px 7px;font-size:10px;color:var(--muted2);font-weight:600;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   PAGE: HISTORY
+───────────────────────────────────────────────────────────────────── */
+.history-filters{
+  display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center;
+}
+.filter-chip{
+  height:32px;border-radius:8px;padding:0 14px;
+  background:var(--card);border:1px solid var(--border);
+  font-family:'Cairo',sans-serif;font-size:12px;font-weight:600;
+  cursor:pointer;transition:all var(--tr);color:var(--muted2);
+}
+.filter-chip:hover,.filter-chip.active{
+  background:#7c6ef815;border-color:var(--accent);color:var(--accent2);
+}
+.search-box{
+  flex:1;max-width:260px;height:32px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:0 12px;
+  font-family:'Cairo',sans-serif;font-size:12px;color:var(--text);
+  outline:none;
+}
+.search-box::placeholder{color:var(--muted)}
+.search-box:focus{border-color:var(--accent)}
+
+.history-list{display:flex;flex-direction:column;gap:8px}
+.history-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 18px;
+  display:flex;align-items:center;gap:14px;
+  cursor:pointer;transition:all var(--tr);
+}
+.history-item:hover{border-color:var(--border-md);background:var(--card2)}
+.hi-icon{
+  width:48px;height:48px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(135deg,#1a1535,#0f1a2e);
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+}
+.hi-info{flex:1;min-width:0}
+.hi-name{font-size:14px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hi-meta{font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.hi-ops{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.hi-op{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:6px;padding:2px 8px;font-size:11px;color:var(--muted2);font-weight:600;
+}
+.hi-op.sil{background:#f8717110;border-color:#f8717130;color:var(--danger)}
+.hi-op.eq{background:#7c6ef810;border-color:#7c6ef830;color:var(--accent2)}
+.hi-op.prayer{background:#fbbf2410;border-color:#fbbf2430;color:var(--warning)}
+.hi-op.norm{background:#34d39910;border-color:#34d39930;color:var(--success)}
+.hi-time{font-size:12px;font-weight:700;color:var(--muted2);white-space:nowrap;flex-shrink:0}
+.hi-actions{display:flex;gap:6px;flex-shrink:0}
+.hi-btn{
+  width:32px;height:32px;border-radius:8px;
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:14px;color:var(--muted2);
+  transition:all var(--tr);
+}
+.hi-btn:hover{color:var(--text);border-color:var(--border-md)}
+.hi-btn.danger:hover{color:var(--danger);border-color:#f8717130;background:#f8717110}
+
+.history-empty{
+  text-align:center;padding:80px 20px;color:var(--muted);
+}
+.history-empty-icon{font-size:48px;margin-bottom:16px;opacity:0.5}
+
+/* Storage bar */
+.storage-bar-wrap{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 18px;margin-bottom:20px;
+  display:flex;align-items:center;gap:14px;
+}
+.storage-label{font-size:12px;font-weight:600;flex-shrink:0}
+.storage-track{flex:1;height:6px;background:var(--surface);border-radius:3px;overflow:hidden}
+.storage-fill{height:100%;background:linear-gradient(to right,var(--accent),var(--accent2));border-radius:3px;width:34%}
+.storage-info{font-size:11px;color:var(--muted);flex-shrink:0}
+
+/* ─────────────────────────────────────────────────────────────────────
+   PAGE: SETTINGS
+───────────────────────────────────────────────────────────────────── */
+.settings-layout{display:grid;grid-template-columns:200px 1fr;gap:20px}
+.settings-nav{display:flex;flex-direction:column;gap:2px}
+.s-nav-item{
+  padding:9px 12px;border-radius:var(--r-sm);cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--muted2);
+  transition:all var(--tr);display:flex;align-items:center;gap:8px;
+}
+.s-nav-item:hover{background:var(--card);color:var(--text)}
+.s-nav-item.active{background:#7c6ef815;color:var(--accent2);border:1px solid #7c6ef830}
+
+.settings-content{display:flex;flex-direction:column;gap:16px}
+.settings-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;
+}
+.settings-card-header{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.sc-icon{font-size:20px}
+.sc-title{font-size:15px;font-weight:700}
+.sc-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.settings-row{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.settings-row:last-child{border-bottom:none}
+.sr-info{flex:1}
+.sr-label{font-size:13px;font-weight:600}
+.sr-desc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
+.sr-control{flex-shrink:0}
+
+/* Toggle switch */
+.toggle{
+  width:44px;height:24px;border-radius:12px;
+  background:var(--surface);border:1px solid var(--border-md);
+  position:relative;cursor:pointer;transition:background var(--tr);
+}
+.toggle.on{background:var(--accent);border-color:var(--accent)}
+.toggle::after{
+  content:'';position:absolute;top:2px;right:2px;
+  width:18px;height:18px;border-radius:50%;background:white;
+  box-shadow:0 1px 4px #00000040;transition:transform var(--tr);
+}
+.toggle.on::after{transform:translateX(-20px)}
+
+/* Select */
+.s-select{
+  background:var(--surface);border:1px solid var(--border-md);
+  border-radius:8px;padding:6px 12px;
+  font-family:'Cairo',sans-serif;font-size:12px;color:var(--text);
+  cursor:pointer;outline:none;
+}
+.s-select:focus{border-color:var(--accent)}
+
+/* Slider */
+.s-slider-wrap{display:flex;align-items:center;gap:10px}
+.s-slider{
+  width:120px;-webkit-appearance:none;appearance:none;
+  height:4px;border-radius:2px;background:var(--surface);outline:none;cursor:pointer;
+}
+.s-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--accent);cursor:pointer;box-shadow:0 2px 6px var(--glow);
+}
+.s-val{font-size:12px;font-weight:700;color:var(--accent2);min-width:36px}
+
+/* Color picker row */
+.color-options{display:flex;gap:8px}
+.color-dot{
+  width:24px;height:24px;border-radius:50%;cursor:pointer;
+  border:2px solid transparent;transition:border-color var(--tr);
+}
+.color-dot.active,.color-dot:hover{border-color:white}
+
+/* ─────────────────────────────────────────────────────────────────────
+   PAGE: GUIDED WORKFLOW
+───────────────────────────────────────────────────────────────────── */
+.workflow-shell{
+  display:flex;flex-direction:column;height:100%;
+}
+.workflow-progress{
+  padding:16px 24px;border-bottom:1px solid var(--border);
+  background:var(--surface);flex-shrink:0;
+}
+.wp-steps{display:flex;gap:0;align-items:center}
+.wp-step{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  position:relative;cursor:pointer;
+}
+.wp-step:not(:last-child)::after{
+  content:'';position:absolute;top:16px;left:calc(-50% + 16px);right:calc(50% + 16px);
+  height:2px;background:var(--border-md);z-index:0;
+}
+.wp-step.done:not(:last-child)::after,.wp-step.active:not(:last-child)::after{background:var(--accent)}
+.wp-circle{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--card);border:2px solid var(--border-md);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:var(--muted);
+  position:relative;z-index:1;transition:all var(--tr);
+}
+.wp-step.done .wp-circle{background:#34d39920;border-color:var(--success);color:var(--success)}
+.wp-step.active .wp-circle{background:#7c6ef820;border-color:var(--accent);color:var(--accent);box-shadow:0 0 14px var(--glow)}
+.wp-label{font-size:11px;color:var(--muted);margin-top:6px;font-weight:600;text-align:center}
+.wp-step.active .wp-label{color:var(--accent2)}
+.wp-step.done .wp-label{color:var(--success)}
+
+.workflow-body{flex:1;overflow-y:auto;padding:24px}
+
+/* Step card */
+.step-card{
+  max-width:680px;margin:0 auto;
+}
+.step-num{
+  font-size:11px;font-weight:700;color:var(--accent2);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:8px;
+}
+.step-title{font-size:22px;font-weight:900;margin-bottom:8px}
+.step-desc{font-size:14px;color:var(--muted2);line-height:1.7;margin-bottom:24px}
+
+/* Upload step */
+.wf-upload{
+  border:1.5px dashed var(--border-md);border-radius:20px;
+  padding:40px;text-align:center;cursor:pointer;
+  background:var(--card);transition:all var(--tr);margin-bottom:20px;
+}
+.wf-upload:hover{border-color:var(--accent);background:#7c6ef808}
+.wf-upload-icon{font-size:40px;margin-bottom:16px}
+.wf-upload-title{font-size:16px;font-weight:700;margin-bottom:6px}
+.wf-upload-sub{font-size:13px;color:var(--muted)}
+
+/* Option cards */
+.option-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.opt-card{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:var(--r);padding:18px 16px;cursor:pointer;
+  transition:all var(--tr);text-align:center;
+}
+.opt-card:hover{border-color:var(--border-hi);transform:translateY(-2px)}
+.opt-card.selected{border-color:var(--accent);background:#7c6ef810}
+.opt-icon{font-size:28px;margin-bottom:10px}
+.opt-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.opt-desc{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* AI result preview */
+.ai-result-card{
+  background:linear-gradient(135deg,#1a1040,#0f1a2e);
+  border:1px solid #7c6ef830;border-radius:var(--r);padding:20px;
+  margin-bottom:16px;
+}
+.ai-result-title{font-size:14px;font-weight:700;color:var(--accent2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ai-finding{
+  display:flex;align-items:center;gap:10px;padding:8px 0;
+  border-bottom:1px solid #ffffff08;font-size:13px;
+}
+.ai-finding:last-child{border-bottom:none}
+.ai-finding-icon{font-size:16px;flex-shrink:0}
+.ai-finding-text{flex:1;color:var(--muted2)}
+.ai-finding-val{font-size:12px;font-weight:700;flex-shrink:0}
+.ai-finding-val.good{color:var(--success)}
+.ai-finding-val.warn{color:var(--warning)}
+.ai-finding-val.info{color:var(--accent2)}
+
+/* Comparison strip */
+.compare-strip{
+  display:grid;grid-template-columns:1fr 24px 1fr;gap:0;
+  align-items:center;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;margin-bottom:16px;
+}
+.compare-side{padding:16px}
+.compare-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+.compare-val{font-size:18px;font-weight:800}
+.compare-meta{font-size:11px;color:var(--muted);margin-top:3px}
+.compare-arrow{text-align:center;font-size:16px;color:var(--muted);background:var(--surface)}
+.compare-after .compare-val{color:var(--success)}
+
+/* Progress step content */
+.processing-anim{
+  text-align:center;padding:40px;
+}
+.processing-ring{
+  width:80px;height:80px;border-radius:50%;
+  border:3px solid var(--border-md);
+  border-top-color:var(--accent);
+  margin:0 auto 20px;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.processing-step-list{
+  max-width:320px;margin:0 auto;text-align:right;
+}
+.proc-step{
+  display:flex;align-items:center;gap:10px;padding:8px 0;
+  font-size:13px;color:var(--muted2);
+}
+.proc-step.done{color:var(--success)}
+.proc-step.active{color:var(--text)}
+.proc-step-icon{flex-shrink:0;font-size:16px}
+
+/* Workflow footer */
+.workflow-footer{
+  padding:16px 24px;border-top:1px solid var(--border);
+  background:var(--surface);display:flex;align-items:center;gap:12px;
+  flex-shrink:0;
+}
+.wf-btn{
+  height:44px;border-radius:12px;padding:0 24px;
+  font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;border:none;transition:all var(--tr);
+  display:flex;align-items:center;gap:8px;
+}
+.wf-btn.primary{background:linear-gradient(135deg,#6d5ef0,#8b5cf6);color:white;box-shadow:0 4px 16px var(--glow)}
+.wf-btn.primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px #7c6ef850}
+.wf-btn.ghost{background:var(--card);border:1px solid var(--border);color:var(--muted2)}
+.wf-btn.ghost:hover{color:var(--text);border-color:var(--border-md)}
+.step-counter{flex:1;text-align:center;font-size:12px;color:var(--muted)}
+
+/* ─── Multi-file Trim Panel ────────────────────────────────────────── */
+.file-queue{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.fq-item{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;
+}
+.fq-header{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;
+}
+.fq-drag{font-size:14px;color:var(--muted);cursor:grab}
+.fq-icon{font-size:20px}
+.fq-name{flex:1;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fq-dur{font-size:12px;color:var(--accent2);font-weight:700;flex-shrink:0}
+.fq-status{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.fq-status.ready{background:var(--success);box-shadow:0 0 6px var(--success)}
+.fq-status.loading{background:var(--warning);animation:pulse2 1s ease infinite}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.4}}
+.fq-actions{display:flex;gap:4px;flex-shrink:0}
+.fq-btn{
+  width:28px;height:28px;border-radius:7px;
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:12px;color:var(--muted2);
+  transition:all var(--tr);
+}
+.fq-btn:hover{color:var(--text)}
+.fq-mini-wave{
+  height:40px;background:var(--surface);
+  display:flex;align-items:center;padding:0 14px;gap:2px;
+  border-top:1px solid var(--border);
+}
+.fq-bar{width:3px;border-radius:1px;background:#7c6ef850}
+
+/* Mini waveform animation */
+@keyframes wbar{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.3)}}
+
+/* ─── Notifications / Toast ───────────────────────────────────────── */
+.toast-wrap{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  z-index:9999;display:flex;flex-direction:column;gap:8px;
+  pointer-events:none;
+}
+.toast{
+  background:var(--card2);border:1px solid var(--border-md);
+  border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;
+  box-shadow:0 8px 24px #00000060;
+  animation:toastIn .3s ease;display:flex;align-items:center;gap:8px;
+  pointer-events:auto;min-width:240px;
+}
+@keyframes toastIn{from{transform:translateY(-12px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast.success{border-color:#34d39930;background:#34d39910}
+.toast.info{border-color:#7c6ef830}
+
+/* ─── Shortcuts help ──────────────────────────────────────────────── */
+.shortcut-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.shortcut-row{
+  display:flex;align-items:center;gap:10px;padding:8px 12px;
+  background:var(--surface);border-radius:8px;font-size:12px;
+}
+.key-chip{
+  background:var(--card2);border:1px solid var(--border-md);
+  border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700;
+  color:var(--accent2);white-space:nowrap;
+}
+.key-desc{color:var(--muted2);flex:1}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-md);border-radius:3px}
+
+/* ─── Responsive ──────────────────────────────────────────────────── */
+@media(max-width:700px){
+  .sidebar{display:none}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .quick-tools{grid-template-columns:1fr}
+  .settings-layout{grid-template-columns:1fr}
+  .settings-nav{flex-direction:row;flex-wrap:wrap;gap:6px}
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+<!-- ══════════════════════════ SIDEBAR ══════════════════════════ -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">🎙</div>
+    <div style="flex:1;overflow:hidden">
+      <div class="logo-text">معالج الصوت</div>
+      <div class="logo-sub">الاستوديو الذكي</div>
+    </div>
+    <div class="collapse-btn" onclick="toggleSidebar()">◀</div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-item" onclick="showPage('dashboard')">
+      <span class="nav-icon">🏠</span><span class="nav-label">الرئيسية</span>
+    </div>
+    <div class="nav-item active" onclick="showPage('studio')">
+      <span class="nav-icon">🎙️</span><span class="nav-label">الاستوديو</span>
+    </div>
+    <div class="nav-item" onclick="showPage('guided')">
+      <span class="nav-icon">🧭</span><span class="nav-label">الخطوات المرشدة</span>
+    </div>
+    <div class="nav-item" onclick="showPage('multifile')">
+      <span class="nav-icon">🔗</span><span class="nav-label">دمج ملفات</span>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-item" onclick="showPage('history')">
+      <span class="nav-icon">📚</span><span class="nav-label">السجل</span>
+      <span class="nav-badge">12</span>
+    </div>
+    <div class="nav-item" onclick="showPage('settings')">
+      <span class="nav-icon">⚙️</span><span class="nav-label">الإعدادات</span>
+    </div>
+    <div class="nav-item" onclick="showPage('shortcuts')">
+      <span class="nav-icon">⌨️</span><span class="nav-label">اختصارات لوحة المفاتيح</span>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="user-avatar">👤</div>
+      <div style="flex:1;overflow:hidden">
+        <div class="user-name">المشرف الصوتي</div>
+        <div class="user-plan">الإصدار المجاني · كل المعالجة محلية</div>
+      </div>
+    </div>
+  </div>
+</div><!-- /sidebar -->
+
+<!-- ══════════════════════════ MAIN ══════════════════════════════ -->
+<div class="main">
+
+<!-- ─────────────── PAGE: DASHBOARD ─────────────── -->
+<div class="page active" id="page-dashboard">
+  <div class="page-topbar">
+    <div>
+      <div class="page-title">الرئيسية 🏠</div>
+      <div class="page-sub">مرحباً — ابدأ بمعالجة تسجيلاتك</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="showPage('studio')">🎙️ استوديو جديد</button>
+  </div>
+
+  <div class="page" id="page-dashboard-content" style="display:block">
+    <div class="welcome-banner">
+      <div class="welcome-title">🕌 مرحباً بك في المعالج الذكي</div>
+      <div class="welcome-sub">
+        معالجة صوتية متخصصة للمساجد والتلاوة القرآنية.<br>
+        كل شيء يعمل في متصفحك — لا رفع، لا خادم، لا انتظار.
+      </div>
+      <div class="welcome-actions">
+        <button class="btn primary" onclick="showPage('guided')">🧭 بدء موجَّه للمبتدئين</button>
+        <button class="btn ghost" onclick="showPage('studio')">⚡ استوديو متقدم</button>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">🎙️</div>
+        <div class="stat-num">47</div>
+        <div class="stat-label">ملف تمت معالجته</div>
+        <div class="stat-trend">↑ 8 هذا الأسبوع</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-num">38h</div>
+        <div class="stat-label">إجمالي المدة المعالجة</div>
+        <div class="stat-trend">↑ 3.2h هذا الأسبوع</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔇</div>
+        <div class="stat-num">312</div>
+        <div class="stat-label">صمتة تمت إزالتها</div>
+        <div class="stat-trend" style="color:var(--accent2)">~6.7 لكل ملف معدلاً</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⬇️</div>
+        <div class="stat-num">4.1h</div>
+        <div class="stat-label">وقت تم توفيره</div>
+        <div class="stat-trend">متوسط 5.3 دقيقة/ملف</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">⚡ أدوات سريعة</div>
+    </div>
+    <div class="quick-tools">
+      <div class="quick-card featured" onclick="showPage('guided')">
+        <div class="qc-icon">🧭</div>
+        <div class="qc-title">بدء موجَّه</div>
+        <div class="qc-sub">خطوة بخطوة للمبتدئين — يحلل الملف ويقترح الأفضل تلقائياً</div>
+      </div>
+      <div class="quick-card" onclick="showPage('studio')">
+        <div class="qc-icon">🔇</div>
+        <div class="qc-title">حذف الصمتات</div>
+        <div class="qc-sub">اكتشاف وحذف الفراغات بالذكاء الاصطناعي</div>
+      </div>
+      <div class="quick-card" onclick="showPage('studio')">
+        <div class="qc-icon">🕌</div>
+        <div class="qc-title">معالجة الصلاة</div>
+        <div class="qc-sub">تحليل ذكي لأركان الصلاة وانتقالاتها</div>
+      </div>
+      <div class="quick-card" onclick="showPage('studio')">
+        <div class="qc-icon">🎚️</div>
+        <div class="qc-title">تحسين الصوت</div>
+        <div class="qc-sub">EQ + تطبيع + ضاغط مُحسَّن للمساجد</div>
+      </div>
+      <div class="quick-card" onclick="showPage('multifile')">
+        <div class="qc-icon">🔗</div>
+        <div class="qc-title">دمج ملفات</div>
+        <div class="qc-sub">اجمع عدة تسجيلات في ملف واحد سلس</div>
+      </div>
+      <div class="quick-card" onclick="showPage('studio')">
+        <div class="qc-icon">📝</div>
+        <div class="qc-title">تحويل لنص</div>
+        <div class="qc-sub">Whisper AI — دقة عالية للغة العربية</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">🕒 آخر المعالجات</div>
+      <div class="section-link" onclick="showPage('history')">عرض الكل ←</div>
+    </div>
+    <div class="recent-grid">
+      <div class="recent-card">
+        <div class="rc-icon">🕌</div>
+        <div style="flex:1;min-width:0">
+          <div class="rc-name">صلاة المغرب - الجامع الكبير</div>
+          <div class="rc-meta"><span>48:23</span><span>12.4 MB</span><span style="color:var(--muted)">منذ 2 ساعة</span></div>
+          <div class="rc-ops">
+            <span class="op-chip">🔇 7 صمتات</span>
+            <span class="op-chip">🕌 صلاة</span>
+            <span class="op-chip">WAV</span>
+          </div>
+        </div>
+      </div>
+      <div class="recent-card">
+        <div class="rc-icon">📖</div>
+        <div style="flex:1;min-width:0">
+          <div class="rc-name">تلاوة سورة البقرة - الشيخ أحمد</div>
+          <div class="rc-meta"><span>32:07</span><span>8.1 MB</span><span style="color:var(--muted)">بالأمس</span></div>
+          <div class="rc-ops">
+            <span class="op-chip">🎚️ EQ</span>
+            <span class="op-chip">📊 تطبيع</span>
+            <span class="op-chip">MP3</span>
+          </div>
+        </div>
+      </div>
+      <div class="recent-card">
+        <div class="rc-icon">🎙️</div>
+        <div style="flex:1;min-width:0">
+          <div class="rc-name">خطبة الجمعة - جامع النور</div>
+          <div class="rc-meta"><span>28:15</span><span>6.8 MB</span><span style="color:var(--muted)">3 أيام</span></div>
+          <div class="rc-ops">
+            <span class="op-chip">🔇 4 صمتات</span>
+            <span class="op-chip">✂️ قص</span>
+            <span class="op-chip">MP3 192k</span>
+          </div>
+        </div>
+      </div>
+      <div class="recent-card">
+        <div class="rc-icon">🔗</div>
+        <div style="flex:1;min-width:0">
+          <div class="rc-name">صلاة التراويح - ليلة 27</div>
+          <div class="rc-meta"><span>1:24:07</span><span>34.2 MB</span><span style="color:var(--muted)">أسبوع</span></div>
+          <div class="rc-ops">
+            <span class="op-chip">🔗 3 ملفات</span>
+            <span class="op-chip">🔇 12 صمتة</span>
+            <span class="op-chip">WAV</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── PAGE: STUDIO LINK ─────────────── -->
+<div class="page" id="page-studio">
+  <div class="page-topbar">
+    <div><div class="page-title">🎙️ الاستوديو</div></div>
+    <div class="spacer"></div>
+  </div>
+  <div style="padding:60px;text-align:center;color:var(--muted)">
+    <div style="font-size:48px;margin-bottom:16px">🎙️</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:8px">الاستوديو الكامل</div>
+    <div style="margin-bottom:20px">افتح النموذج الأول لتجربة الاستوديو الكاملة مع الموجة الصوتية</div>
+    <button class="btn primary" onclick="window.open('ui-prototype.html','_blank')">فتح الاستوديو ←</button>
+  </div>
+</div>
+
+<!-- ─────────────── PAGE: HISTORY ─────────────── -->
+<div class="page" id="page-history">
+  <div class="page-topbar">
+    <div>
+      <div class="page-title">📚 سجل المعالجات</div>
+      <div class="page-sub">47 ملف · آخر 30 يوماً</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn danger-ghost">🗑️ مسح الكل</button>
+  </div>
+
+  <div style="padding:20px 24px">
+    <div class="storage-bar-wrap">
+      <div class="storage-label">📦 مساحة السجل</div>
+      <div class="storage-track"><div class="storage-fill"></div></div>
+      <div class="storage-info">342 KB من 1 MB</div>
+    </div>
+
+    <div class="history-filters">
+      <button class="filter-chip active">الكل (47)</button>
+      <button class="filter-chip">🔇 إزالة صمت</button>
+      <button class="filter-chip">🕌 صلاة</button>
+      <button class="filter-chip">🔗 دمج</button>
+      <button class="filter-chip">🎚️ EQ</button>
+      <div class="spacer"></div>
+      <input class="search-box" placeholder="🔍 بحث باسم الملف...">
+    </div>
+
+    <div class="history-list">
+
+      <div class="history-item">
+        <div class="hi-icon">🕌</div>
+        <div class="hi-info">
+          <div class="hi-name">صلاة المغرب - الجامع الكبير.mp3</div>
+          <div class="hi-meta">
+            <span>48:23 → 44:11</span>
+            <span>12.4 MB</span>
+            <span>اليوم، 8:34 م</span>
+          </div>
+          <div class="hi-ops">
+            <span class="hi-op sil">🔇 7 صمتات</span>
+            <span class="hi-op prayer">🕌 معالجة صلاة</span>
+            <span class="hi-op norm">📊 تطبيع</span>
+          </div>
+        </div>
+        <div class="hi-time">−4:12</div>
+        <div class="hi-actions">
+          <div class="hi-btn" title="تحميل">⬇️</div>
+          <div class="hi-btn" title="فتح في الاستوديو">🎙️</div>
+          <div class="hi-btn danger" title="حذف">🗑️</div>
+        </div>
+      </div>
+
+      <div class="history-item">
+        <div class="hi-icon">📖</div>
+        <div class="hi-info">
+          <div class="hi-name">تلاوة سورة البقرة - الشيخ أحمد.m4a</div>
+          <div class="hi-meta">
+            <span>32:07 → 30:44</span>
+            <span>8.1 MB</span>
+            <span>بالأمس، 10:15 م</span>
+          </div>
+          <div class="hi-ops">
+            <span class="hi-op eq">🎚️ EQ مسجد</span>
+            <span class="hi-op norm">📊 تطبيع ×2.3</span>
+          </div>
+        </div>
+        <div class="hi-time">−1:23</div>
+        <div class="hi-actions">
+          <div class="hi-btn">⬇️</div>
+          <div class="hi-btn">🎙️</div>
+          <div class="hi-btn danger">🗑️</div>
+        </div>
+      </div>
+
+      <div class="history-item">
+        <div class="hi-icon">🎙️</div>
+        <div class="hi-info">
+          <div class="hi-name">خطبة الجمعة - جامع النور.wav</div>
+          <div class="hi-meta">
+            <span>28:15 → 26:50</span>
+            <span>6.8 MB</span>
+            <span>3 أيام، 1:22 م</span>
+          </div>
+          <div class="hi-ops">
+            <span class="hi-op sil">🔇 4 صمتات</span>
+            <span class="hi-op">✂️ قص</span>
+          </div>
+        </div>
+        <div class="hi-time">−1:25</div>
+        <div class="hi-actions">
+          <div class="hi-btn">⬇️</div>
+          <div class="hi-btn">🎙️</div>
+          <div class="hi-btn danger">🗑️</div>
+        </div>
+      </div>
+
+      <div class="history-item">
+        <div class="hi-icon">🔗</div>
+        <div class="hi-info">
+          <div class="hi-name">صلاة التراويح - ليلة 27 [مدموج].wav</div>
+          <div class="hi-meta">
+            <span>1:24:07 → 1:14:32</span>
+            <span>34.2 MB</span>
+            <span>أسبوع، 11:58 م</span>
+          </div>
+          <div class="hi-ops">
+            <span class="hi-op">🔗 3 ملفات مدموجة</span>
+            <span class="hi-op sil">🔇 12 صمتة</span>
+            <span class="hi-op prayer">🕌 صلاة</span>
+          </div>
+        </div>
+        <div class="hi-time">−9:35</div>
+        <div class="hi-actions">
+          <div class="hi-btn">⬇️</div>
+          <div class="hi-btn">🎙️</div>
+          <div class="hi-btn danger">🗑️</div>
+        </div>
+      </div>
+
+      <div class="history-item">
+        <div class="hi-icon">📝</div>
+        <div class="hi-info">
+          <div class="hi-name">درس فقه - أحكام الصلاة.mp3</div>
+          <div class="hi-meta">
+            <span>54:30</span>
+            <span>18.2 MB</span>
+            <span>10 أيام، 9:00 ص</span>
+          </div>
+          <div class="hi-ops">
+            <span class="hi-op sil">🔇 9 صمتات</span>
+            <span class="hi-op">📝 نص مُستخرج</span>
+            <span class="hi-op eq">🎚️ EQ</span>
+          </div>
+        </div>
+        <div class="hi-time">−6:14</div>
+        <div class="hi-actions">
+          <div class="hi-btn">⬇️</div>
+          <div class="hi-btn">🎙️</div>
+          <div class="hi-btn danger">🗑️</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── PAGE: SETTINGS ─────────────── -->
+<div class="page" id="page-settings">
+  <div class="page-topbar">
+    <div>
+      <div class="page-title">⚙️ الإعدادات</div>
+      <div class="page-sub">تخصيص سلوك التطبيق والمعالجة الافتراضية</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn ghost">↺ إعادة الضبط للافتراضي</button>
+    <button class="btn primary" style="margin-right:8px">✓ حفظ التغييرات</button>
+  </div>
+
+  <div style="padding:20px 24px">
+    <div class="settings-layout">
+
+      <!-- Settings sidebar nav -->
+      <div class="settings-nav">
+        <div class="s-nav-item active" onclick="setTab(this)">🔇 إزالة الصمت</div>
+        <div class="s-nav-item" onclick="setTab(this)">🎚️ تحسين الصوت</div>
+        <div class="s-nav-item" onclick="setTab(this)">🎵 التصدير</div>
+        <div class="s-nav-item" onclick="setTab(this)">🎨 الواجهة</div>
+        <div class="s-nav-item" onclick="setTab(this)">⌨️ الاختصارات</div>
+        <div class="s-nav-item" onclick="setTab(this)">🔑 API & الخصوصية</div>
+        <div class="s-nav-item" onclick="setTab(this)">💾 السجل والذاكرة</div>
+      </div>
+
+      <!-- Settings content -->
+      <div class="settings-content">
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="sc-icon">🔇</div>
+            <div>
+              <div class="sc-title">إعدادات إزالة الصمت</div>
+              <div class="sc-sub">القيم الافتراضية المطبَّقة على كل ملف جديد</div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">وضع الكشف الافتراضي</div>
+              <div class="sr-desc">يتحكم في خوارزمية اكتشاف الصمت: يدوي أو ذكاء اصطناعي متعدد الميزات</div>
+            </div>
+            <div class="sr-control">
+              <select class="s-select">
+                <option>🕌 وضع الصلاة (موصى به)</option>
+                <option>🎯 يدوي — RMS بسيط</option>
+                <option>🤖 VAD متقدم — متعدد الميزات</option>
+              </select>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">عتبة الصمت</div>
+              <div class="sr-desc">الحد الذي يُعتبر دونه الصوت صمتاً. القيمة الأقل = حساسية أكبر</div>
+            </div>
+            <div class="sr-control">
+              <div class="s-slider-wrap">
+                <input type="range" class="s-slider" min="-60" max="-5" value="-20" oninput="this.nextElementSibling.textContent=this.value+' dB'">
+                <span class="s-val">−20 dB</span>
+              </div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">الحد الأدنى لمدة الصمت</div>
+              <div class="sr-desc">لا يُحذف أي صمت أقصر من هذه المدة</div>
+            </div>
+            <div class="sr-control">
+              <div class="s-slider-wrap">
+                <input type="range" class="s-slider" min="0.5" max="30" step="0.5" value="5" oninput="this.nextElementSibling.textContent=this.value+' ث'">
+                <span class="s-val">5 ث</span>
+              </div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">الفجوة المتبقية بعد الحذف</div>
+              <div class="sr-desc">يُبقي فراغاً صغيراً بعد كل حذف لمنع الانتقال المتقطع</div>
+            </div>
+            <div class="sr-control">
+              <div class="s-slider-wrap">
+                <input type="range" class="s-slider" min="0" max="3" step="0.1" value="0.5" oninput="this.nextElementSibling.textContent=this.value+' ث'">
+                <span class="s-val">0.5 ث</span>
+              </div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">حد الأمان (الحذف الأقصى)</div>
+              <div class="sr-desc">لا يُحذف أكثر من هذه النسبة من الملف حتى لو طلب المستخدم ذلك</div>
+            </div>
+            <div class="sr-control">
+              <div class="s-slider-wrap">
+                <input type="range" class="s-slider" min="10" max="80" value="40" oninput="this.nextElementSibling.textContent=this.value+'%'">
+                <span class="s-val">40%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="sc-icon">🎚️</div>
+            <div>
+              <div class="sc-title">تحسين الصوت الافتراضي</div>
+              <div class="sc-sub">EQ والضاغط المطبَّقان تلقائياً</div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">تطبيق EQ المسجد تلقائياً</div>
+              <div class="sr-desc">يُطبِّق قطع 120Hz + رفع 3kHz + مقاومة تشويش عند فتح أي ملف</div>
+            </div>
+            <div class="sr-control">
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">قطع التردد العالي (Low-Pass)</div>
+              <div class="sr-desc">يُزيل الحواد فوق نطاق الكلام الطبيعي</div>
+            </div>
+            <div class="sr-control">
+              <div class="s-slider-wrap">
+                <input type="range" class="s-slider" min="6000" max="20000" step="500" value="12000" oninput="this.nextElementSibling.textContent=(this.value/1000).toFixed(1)+'k'">
+                <span class="s-val">12k</span>
+              </div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">نسبة ضاغط الديناميكيا</div>
+              <div class="sr-desc">يوازن بين الأجزاء الهادئة والصاخبة في التسجيل</div>
+            </div>
+            <div class="sr-control">
+              <div class="s-slider-wrap">
+                <input type="range" class="s-slider" min="1" max="10" step="0.5" value="3.5" oninput="this.nextElementSibling.textContent=this.value+':1'">
+                <span class="s-val">3.5:1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="sc-icon">🎨</div>
+            <div>
+              <div class="sc-title">مظهر الواجهة</div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">لون الموجة الصوتية</div>
+            </div>
+            <div class="sr-control">
+              <div class="color-options">
+                <div class="color-dot active" style="background:#7c6ef8" title="بنفسجي"></div>
+                <div class="color-dot" style="background:#38bdf8" title="أزرق"></div>
+                <div class="color-dot" style="background:#34d399" title="أخضر"></div>
+                <div class="color-dot" style="background:#fbbf24" title="ذهبي"></div>
+                <div class="color-dot" style="background:#f87171" title="أحمر"></div>
+              </div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">اللغة</div>
+            </div>
+            <div class="sr-control">
+              <select class="s-select">
+                <option selected>العربية 🇸🇦</option>
+                <option>English 🇬🇧</option>
+              </select>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">تلاشي الانتقالات</div>
+              <div class="sr-desc">تأثيرات حركية ناعمة عند الانتقال بين الأدوات</div>
+            </div>
+            <div class="sr-control">
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">اقتراحات ذكية</div>
+              <div class="sr-desc">يحلل الملف تلقائياً ويقترح الإجراء المناسب</div>
+            </div>
+            <div class="sr-control">
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="sc-icon">🔑</div>
+            <div>
+              <div class="sc-title">الخصوصية والـ API</div>
+              <div class="sc-sub">معلومات الاتصال بخدمة Whisper للنصوص</div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">مفتاح OpenAI API</div>
+              <div class="sr-desc">يُستخدم فقط لتحويل الصوت إلى نص — لا شيء آخر يُرسَل</div>
+            </div>
+            <div class="sr-control">
+              <input style="background:var(--surface);border:1px solid var(--border-md);border-radius:8px;padding:6px 12px;font-family:'Cairo',sans-serif;font-size:12px;color:var(--muted);outline:none;width:180px" placeholder="sk-..." type="password">
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">النطاقات المسموح بها (ALLOWED_ORIGINS)</div>
+              <div class="sr-desc">يمنع المواقع الأخرى من استخدام مفتاحك (اتركه فارغاً للسماح بالكل)</div>
+            </div>
+            <div class="sr-control">
+              <input style="background:var(--surface);border:1px solid var(--border-md);border-radius:8px;padding:6px 12px;font-family:'Cairo',sans-serif;font-size:12px;color:var(--text);outline:none;width:200px" placeholder="https://موقعك.com">
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="sr-info">
+              <div class="sr-label">وضع الخصوصية الكامل</div>
+              <div class="sr-desc">يُعطِّل ميزة التحويل للنص تماماً — لا يتواصل التطبيق مع الإنترنت أبداً</div>
+            </div>
+            <div class="sr-control">
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── PAGE: GUIDED WORKFLOW ─────────────── -->
+<div class="page" id="page-guided">
+  <div class="page-topbar">
+    <div>
+      <div class="page-title">🧭 الخطوات المرشدة</div>
+      <div class="page-sub">للمبتدئين — يحلل الملف ويوجهك خطوة بخطوة</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn ghost" onclick="showPage('studio')">انتقل للاستوديو المتقدم ↗</button>
+  </div>
+
+  <div class="workflow-shell">
+    <div class="workflow-progress">
+      <div class="wp-steps">
+        <div class="wp-step done" onclick="goStep(0)">
+          <div class="wp-circle">✓</div>
+          <div class="wp-label">الرفع</div>
+        </div>
+        <div class="wp-step done" onclick="goStep(1)">
+          <div class="wp-circle">✓</div>
+          <div class="wp-label">التحليل</div>
+        </div>
+        <div class="wp-step active" onclick="goStep(2)">
+          <div class="wp-circle">3</div>
+          <div class="wp-label">المراجعة</div>
+        </div>
+        <div class="wp-step" onclick="goStep(3)">
+          <div class="wp-circle">4</div>
+          <div class="wp-label">التحسين</div>
+        </div>
+        <div class="wp-step" onclick="goStep(4)">
+          <div class="wp-circle">5</div>
+          <div class="wp-label">التصدير</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="workflow-body">
+      <div class="step-card">
+
+        <!-- Step 0: Upload -->
+        <div id="wf-step-0" style="display:none">
+          <div class="step-num">الخطوة 1 من 5</div>
+          <div class="step-title">ارفع ملفك الصوتي</div>
+          <div class="step-desc">يمكنك رفع أي تسجيل صوتي — المعالجة كاملة في متصفحك، لا شيء يُرسَل للإنترنت.</div>
+          <div class="wf-upload" onclick="goStep(1)">
+            <div class="wf-upload-icon">🎙️</div>
+            <div class="wf-upload-title">اسحب الملف هنا أو انقر للاختيار</div>
+            <div class="wf-upload-sub">MP3 · WAV · M4A · OGG · حتى 200 MB</div>
+          </div>
+          <div class="option-grid">
+            <div class="opt-card selected" onclick="selOpt(this)">
+              <div class="opt-icon">🕌</div>
+              <div class="opt-title">تسجيل صلاة</div>
+              <div class="opt-desc">خطب وصلوات وتكبيرات من المسجد</div>
+            </div>
+            <div class="opt-card" onclick="selOpt(this)">
+              <div class="opt-icon">📖</div>
+              <div class="opt-title">تلاوة قرآنية</div>
+              <div class="opt-desc">تلاوة أو تحفيظ أو درس قرآني</div>
+            </div>
+            <div class="opt-card" onclick="selOpt(this)">
+              <div class="opt-icon">🎓</div>
+              <div class="opt-title">درس أو محاضرة</div>
+              <div class="opt-desc">دروس دينية أو تعليمية</div>
+            </div>
+            <div class="opt-card" onclick="selOpt(this)">
+              <div class="opt-icon">🎙️</div>
+              <div class="opt-title">تسجيل عام</div>
+              <div class="opt-desc">أي تسجيل آخر</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 1: Analyzing -->
+        <div id="wf-step-1" style="display:none">
+          <div class="step-num">الخطوة 2 من 5</div>
+          <div class="step-title">جاري تحليل التسجيل...</div>
+          <div class="step-desc">يفحص المحرك الذكي الملف ويكتشف الصمتات وجودة الصوت وأركان الصلاة.</div>
+          <div class="processing-anim">
+            <div class="processing-ring"></div>
+            <div class="processing-step-list">
+              <div class="proc-step done"><span class="proc-step-icon">✅</span> تحميل الملف وفك التشفير</div>
+              <div class="proc-step done"><span class="proc-step-icon">✅</span> حساب مستوى الصوت (RMS)</div>
+              <div class="proc-step active"><span class="proc-step-icon">⏳</span> اكتشاف الصمتات والانتقالات</div>
+              <div class="proc-step"><span class="proc-step-icon">⬜</span> تحليل أركان الصلاة</div>
+              <div class="proc-step"><span class="proc-step-icon">⬜</span> تقييم جودة الصوت</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Review (active) -->
+        <div id="wf-step-2">
+          <div class="step-num">الخطوة 3 من 5 — المراجعة</div>
+          <div class="step-title">نتائج التحليل الذكي</div>
+          <div class="step-desc">اطّلع على ما اكتشفه المحرك وقرِّر ما تريد تطبيقه.</div>
+
+          <div class="ai-result-card">
+            <div class="ai-result-title">🤖 ما اكتشفه الذكاء الاصطناعي</div>
+            <div class="ai-finding">
+              <span class="ai-finding-icon">🔇</span>
+              <span class="ai-finding-text">صمتات طويلة قابلة للحذف</span>
+              <span class="ai-finding-val warn">7 صمتات · 4:12</span>
+            </div>
+            <div class="ai-finding">
+              <span class="ai-finding-icon">🕌</span>
+              <span class="ai-finding-text">أركان صلاة مكتشفة</span>
+              <span class="ai-finding-val good">17 ركعة</span>
+            </div>
+            <div class="ai-finding">
+              <span class="ai-finding-icon">📊</span>
+              <span class="ai-finding-text">مستوى الصوت</span>
+              <span class="ai-finding-val warn">منخفض − يحتاج تطبيعاً</span>
+            </div>
+            <div class="ai-finding">
+              <span class="ai-finding-icon">🎚️</span>
+              <span class="ai-finding-text">جودة الصوت العامة</span>
+              <span class="ai-finding-val good">جيدة — ضجيج خلفي خفيف</span>
+            </div>
+            <div class="ai-finding">
+              <span class="ai-finding-icon">⏱️</span>
+              <span class="ai-finding-text">الوقت المتوقع توفيره</span>
+              <span class="ai-finding-val info">~4:12 دقيقة</span>
+            </div>
+          </div>
+
+          <div class="compare-strip">
+            <div class="compare-side">
+              <div class="compare-label">قبل المعالجة</div>
+              <div class="compare-val">48:23</div>
+              <div class="compare-meta">12.4 MB · MP3</div>
+            </div>
+            <div class="compare-arrow">→</div>
+            <div class="compare-side compare-after">
+              <div class="compare-label">بعد المعالجة</div>
+              <div class="compare-val">44:11</div>
+              <div class="compare-meta">~11.2 MB · WAV / MP3</div>
+            </div>
+          </div>
+
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700">اختر ما تريد تطبيقه</div>
+            <div class="settings-row">
+              <div class="sr-info"><div class="sr-label">🔇 حذف الصمتات (7 صمتة)</div><div class="sr-desc">يوفر 4:12 دقيقة</div></div>
+              <div class="sr-control"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-info"><div class="sr-label">🕌 معالجة الصلاة (ركوع وسجود)</div><div class="sr-desc">يضبط الانتقالات بين الأركان</div></div>
+              <div class="sr-control"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-info"><div class="sr-label">📊 تطبيع المستوى (مستوى منخفض)</div><div class="sr-desc">يرفع الصوت ×2.3 بأمان</div></div>
+              <div class="sr-control"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-info"><div class="sr-label">🎚️ EQ المسجد</div><div class="sr-desc">يُحسِّن وضوح الصوت ويقلل الضجيج</div></div>
+              <div class="sr-control"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Processing -->
+        <div id="wf-step-3" style="display:none">
+          <div class="step-num">الخطوة 4 من 5</div>
+          <div class="step-title">تطبيق التحسينات...</div>
+          <div class="step-desc">المعالجة تجري الآن في متصفحك — لا انتظار، لا رفع.</div>
+          <div class="processing-anim">
+            <div class="processing-ring"></div>
+            <div class="processing-step-list">
+              <div class="proc-step done"><span class="proc-step-icon">✅</span> حذف 7 صمتات (4:12 دقيقة)</div>
+              <div class="proc-step done"><span class="proc-step-icon">✅</span> معالجة أركان الصلاة</div>
+              <div class="proc-step active"><span class="proc-step-icon">⏳</span> تطبيع المستوى الصوتي</div>
+              <div class="proc-step"><span class="proc-step-icon">⬜</span> EQ وتحسين الوضوح</div>
+              <div class="proc-step"><span class="proc-step-icon">⬜</span> تصدير الملف النهائي</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Export -->
+        <div id="wf-step-4" style="display:none">
+          <div class="step-num">الخطوة 5 من 5</div>
+          <div class="step-title">✅ اكتملت المعالجة!</div>
+          <div class="step-desc">الملف جاهز للتحميل. اختر الصيغة المناسبة لاستخدامك.</div>
+          <div class="compare-strip" style="margin-bottom:16px">
+            <div class="compare-side">
+              <div class="compare-label">قبل</div>
+              <div class="compare-val">48:23</div>
+              <div class="compare-meta">12.4 MB</div>
+            </div>
+            <div class="compare-arrow">→</div>
+            <div class="compare-side compare-after">
+              <div class="compare-label">بعد</div>
+              <div class="compare-val">44:11</div>
+              <div class="compare-meta">وُفِّر 4:12 دقيقة</div>
+            </div>
+          </div>
+          <div class="option-grid">
+            <div class="opt-card selected" onclick="selOpt(this)">
+              <div class="opt-icon">🎵</div>
+              <div class="opt-title">MP3 · 128k</div>
+              <div class="opt-desc">~43 MB · مثالي للمشاركة</div>
+            </div>
+            <div class="opt-card" onclick="selOpt(this)">
+              <div class="opt-icon">🎵</div>
+              <div class="opt-title">MP3 · 192k</div>
+              <div class="opt-desc">~64 MB · جودة عالية</div>
+            </div>
+            <div class="opt-card" onclick="selOpt(this)">
+              <div class="opt-icon">📁</div>
+              <div class="opt-title">WAV · أصلي</div>
+              <div class="opt-desc">~230 MB · للأرشفة</div>
+            </div>
+            <div class="opt-card" onclick="selOpt(this)">
+              <div class="opt-icon">📱</div>
+              <div class="opt-title">MP3 · 96k</div>
+              <div class="opt-desc">~32 MB · واتساب</div>
+            </div>
+          </div>
+          <button class="wf-btn primary" style="width:100%;justify-content:center" onclick="alert('✅ تم التحميل!')">⬇️ تحميل الملف</button>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="workflow-footer">
+      <button class="wf-btn ghost" id="wf-prev" onclick="prevStep()">← السابق</button>
+      <div class="step-counter" id="step-counter">الخطوة 3 من 5</div>
+      <button class="wf-btn primary" id="wf-next" onclick="nextStep()">التالي ←</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── PAGE: MULTI-FILE ─────────────── -->
+<div class="page" id="page-multifile">
+  <div class="page-topbar">
+    <div>
+      <div class="page-title">🔗 دمج ملفات متعددة</div>
+      <div class="page-sub">رتِّب الملفات ثم ادمجها في تسجيل واحد سلس</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn ghost">📁 إضافة ملفات</button>
+    <button class="btn primary" style="margin-right:8px" onclick="showToast('⏳ جاري الدمج...')">🔗 دمج الآن</button>
+  </div>
+
+  <div style="padding:20px 24px;display:grid;grid-template-columns:1fr 300px;gap:20px">
+    <!-- File queue -->
+    <div>
+      <div style="margin-bottom:14px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">قائمة الملفات (3) — اسحب لإعادة الترتيب</div>
+
+      <div class="file-queue">
+        <div class="fq-item">
+          <div class="fq-header">
+            <span class="fq-drag">⠿⠿</span>
+            <span class="fq-icon">🎙️</span>
+            <span class="fq-name">صلاة المغرب - الركعة الأولى.mp3</span>
+            <span class="fq-dur">12:14</span>
+            <div class="fq-status ready"></div>
+            <div class="fq-actions">
+              <div class="fq-btn" title="معاينة">▶</div>
+              <div class="fq-btn" title="إزالة صمت هذا الملف">🔇</div>
+              <div class="fq-btn" title="حذف">✕</div>
+            </div>
+          </div>
+          <div class="fq-mini-wave" id="mw1"></div>
+        </div>
+
+        <div class="fq-item">
+          <div class="fq-header">
+            <span class="fq-drag">⠿⠿</span>
+            <span class="fq-icon">🎙️</span>
+            <span class="fq-name">صلاة المغرب - الركعة الثانية.mp3</span>
+            <span class="fq-dur">18:42</span>
+            <div class="fq-status ready"></div>
+            <div class="fq-actions">
+              <div class="fq-btn">▶</div>
+              <div class="fq-btn">🔇</div>
+              <div class="fq-btn">✕</div>
+            </div>
+          </div>
+          <div class="fq-mini-wave" id="mw2"></div>
+        </div>
+
+        <div class="fq-item">
+          <div class="fq-header">
+            <span class="fq-drag">⠿⠿</span>
+            <span class="fq-icon">🎙️</span>
+            <span class="fq-name">صلاة المغرب - الدعاء والختام.mp3</span>
+            <span class="fq-dur">17:27</span>
+            <div class="fq-status loading"></div>
+            <div class="fq-actions">
+              <div class="fq-btn">▶</div>
+              <div class="fq-btn">🔇</div>
+              <div class="fq-btn">✕</div>
+            </div>
+          </div>
+          <div class="fq-mini-wave" id="mw3"></div>
+        </div>
+
+        <div style="border:1.5px dashed var(--border-md);border-radius:var(--r);padding:20px;text-align:center;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;transition:all var(--tr)" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent2)'" onmouseout="this.style.borderColor='var(--border-md)';this.style.color='var(--muted)'">
+          ＋ إضافة ملف آخر
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel: options + summary -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700">⚙️ خيارات الدمج</div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px">الفجوة بين الملفات</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span style="background:#7c6ef820;border:1px solid var(--accent);color:var(--accent2);border-radius:8px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer">0.5 ث ✓</span>
+              <span style="background:var(--surface);border:1px solid var(--border);color:var(--muted2);border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer">1 ث</span>
+              <span style="background:var(--surface);border:1px solid var(--border);color:var(--muted2);border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer">2 ث</span>
+              <span style="background:var(--surface);border:1px solid var(--border);color:var(--muted2);border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer">بدون</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px">تلاشي الوصل (Crossfade)</div>
+            <div class="s-slider-wrap">
+              <input type="range" class="s-slider" min="0" max="500" value="40" oninput="this.nextElementSibling.textContent=this.value+'ms'">
+              <span class="s-val">40ms</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:12px;font-weight:600">إزالة صمت كل ملف أولاً</div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px">📊 ملخص الدمج</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--muted)">عدد الملفات</span>
+            <span style="font-weight:700">3 ملفات</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--muted)">المدة الكلية</span>
+            <span style="font-weight:700;color:var(--accent2)">48:23</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--muted)">بعد إزالة الصمت</span>
+            <span style="font-weight:700;color:var(--success)">~44:10</span>
+          </div>
+          <div style="height:1px;background:var(--border);margin:4px 0"></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--muted)">صيغة التصدير</span>
+            <select class="s-select" style="padding:4px 8px;font-size:11px">
+              <option>MP3 128k</option>
+              <option>MP3 192k</option>
+              <option>WAV</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn primary" style="width:100%;justify-content:center;margin-top:14px" onclick="showToast('⏳ جاري الدمج...')">🔗 دمج وتصدير</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── PAGE: SHORTCUTS ─────────────── -->
+<div class="page" id="page-shortcuts">
+  <div class="page-topbar">
+    <div><div class="page-title">⌨️ اختصارات لوحة المفاتيح</div></div>
+  </div>
+  <div style="padding:20px 24px;max-width:700px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">التشغيل والتنقل</div>
+        <div class="shortcut-grid">
+          <div class="shortcut-row"><span class="key-chip">Space</span><span class="key-desc">تشغيل / إيقاف</span></div>
+          <div class="shortcut-row"><span class="key-chip">← →</span><span class="key-desc">5 ثوانٍ للخلف/أمام</span></div>
+          <div class="shortcut-row"><span class="key-chip">Shift+←</span><span class="key-desc">30 ثانية للخلف</span></div>
+          <div class="shortcut-row"><span class="key-chip">Home</span><span class="key-desc">إلى البداية</span></div>
+          <div class="shortcut-row"><span class="key-chip">End</span><span class="key-desc">إلى النهاية</span></div>
+          <div class="shortcut-row"><span class="key-chip">[ ]</span><span class="key-desc">ضبط بداية/نهاية التحديد</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">الأدوات</div>
+        <div class="shortcut-grid">
+          <div class="shortcut-row"><span class="key-chip">Ctrl+Z</span><span class="key-desc">تراجع</span></div>
+          <div class="shortcut-row"><span class="key-chip">Ctrl+Y</span><span class="key-desc">إعادة</span></div>
+          <div class="shortcut-row"><span class="key-chip">S</span><span class="key-desc">فصل عند Playhead</span></div>
+          <div class="shortcut-row"><span class="key-chip">N</span><span class="key-desc">تطبيع المستوى</span></div>
+          <div class="shortcut-row"><span class="key-chip">Delete</span><span class="key-desc">حذف التحديد</span></div>
+          <div class="shortcut-row"><span class="key-chip">Esc</span><span class="key-desc">إغلاق اللوحة</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">الموجة والتكبير</div>
+        <div class="shortcut-grid">
+          <div class="shortcut-row"><span class="key-chip">Ctrl++</span><span class="key-desc">تكبير الموجة</span></div>
+          <div class="shortcut-row"><span class="key-chip">Ctrl+−</span><span class="key-desc">تصغير الموجة</span></div>
+          <div class="shortcut-row"><span class="key-chip">Ctrl+0</span><span class="key-desc">عرض كامل</span></div>
+          <div class="shortcut-row"><span class="key-chip">Alt+سحب</span><span class="key-desc">إيقاف الـ Snap</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">التصدير والحفظ</div>
+        <div class="shortcut-grid">
+          <div class="shortcut-row"><span class="key-chip">Ctrl+E</span><span class="key-desc">تصدير الملف</span></div>
+          <div class="shortcut-row"><span class="key-chip">Ctrl+Shift+E</span><span class="key-desc">تصدير الأقسام</span></div>
+          <div class="shortcut-row"><span class="key-chip">Ctrl+R</span><span class="key-desc">إعادة للأصل</span></div>
+          <div class="shortcut-row"><span class="key-chip">Ctrl+H</span><span class="key-desc">السجل</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app-shell -->
+
+<!-- Toast -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ── Page routing ──
+const pages = ['dashboard','studio','history','settings','guided','multifile','shortcuts'];
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pg = document.getElementById('page-' + name);
+  if (pg) pg.classList.add('active');
+  // sync nav
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes(name)) n.classList.add('active');
+  });
+}
+
+// ── Sidebar collapse ──
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ── Settings tab ──
+function setTab(el) {
+  document.querySelectorAll('.s-nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── Guided Workflow ──
+let currentStep = 2;
+const totalSteps = 5;
+
+function goStep(n) {
+  for (let i = 0; i < totalSteps; i++) {
+    const el = document.getElementById('wf-step-' + i);
+    if (el) el.style.display = i === n ? 'block' : 'none';
+  }
+  const circles = document.querySelectorAll('.wp-step');
+  circles.forEach((c, i) => {
+    c.classList.remove('done','active');
+    if (i < n) c.classList.add('done');
+    else if (i === n) c.classList.add('active');
+  });
+  document.getElementById('step-counter').textContent = `الخطوة ${n+1} من ${totalSteps}`;
+  document.getElementById('wf-prev').style.opacity = n === 0 ? '0.3' : '1';
+  document.getElementById('wf-next').textContent = n === totalSteps-1 ? '✓ إنهاء' : 'التالي ←';
+  currentStep = n;
+}
+
+function nextStep() {
+  if (currentStep < totalSteps - 1) goStep(currentStep + 1);
+  else showPage('dashboard');
+}
+function prevStep() {
+  if (currentStep > 0) goStep(currentStep - 1);
+}
+
+// ── Option selection ──
+function selOpt(el) {
+  el.closest('.option-grid').querySelectorAll('.opt-card').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ── Filter chips ──
+document.querySelectorAll('.filter-chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+  });
+});
+
+// ── Color dots ──
+document.querySelectorAll('.color-dot').forEach(d => {
+  d.addEventListener('click', () => {
+    d.closest('.color-options').querySelectorAll('.color-dot').forEach(x => x.classList.remove('active'));
+    d.classList.add('active');
+  });
+});
+
+// ── Toast ──
+function showToast(msg, type='info') {
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 2500);
+}
+
+// ── Mini waveforms ──
+function buildMiniWave(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const heights = Array.from({length:40}, () => 8 + Math.random()*28);
+  el.innerHTML = heights.map((h,i) =>
+    `<div class="fq-bar" style="height:${h}px;animation:wbar ${0.5+Math.random()*1}s ${i*0.05}s ease-in-out infinite alternate"></div>`
+  ).join('');
+}
+buildMiniWave('mw1'); buildMiniWave('mw2'); buildMiniWave('mw3');
+
+// ── Init ──
+showPage('dashboard');
+goStep(2);
+
+// Keyboard
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    showPage('dashboard');
+  }
+});
+</script>
+</body>
+</html>

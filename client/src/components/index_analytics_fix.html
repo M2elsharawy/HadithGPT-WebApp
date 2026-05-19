@@ -1,0 +1,30 @@
+<!-- 
+  Fix for: Malformed URI sequence /%VITE_ANALYTICS_ENDPOINT%/umami
+  
+  In index.html, replace the unconditional analytics script:
+  
+  BEFORE (broken):
+  <script src="%VITE_ANALYTICS_ENDPOINT%/umami"
+          data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"
+          ...></script>
+  
+  AFTER (fixed): guard with Vite's conditional import syntax is not available in HTML,
+  so the correct fix is to move analytics initialization to main.tsx/main.ts:
+  
+  Remove the script tag from index.html entirely.
+  In client/src/main.tsx add:
+-->
+<!-- Analytics guard — add to index.html replacing the broken script tag -->
+<script>
+  // Only load analytics if env var is actually defined (not a template placeholder)
+  (function() {
+    var endpoint = "%VITE_ANALYTICS_ENDPOINT%";
+    var siteId   = "%VITE_ANALYTICS_WEBSITE_ID%";
+    if (!endpoint || endpoint.startsWith("%VITE_")) return; // not configured
+    var s = document.createElement("script");
+    s.src = endpoint + "/umami";
+    s.setAttribute("data-website-id", siteId);
+    s.defer = true;
+    document.head.appendChild(s);
+  })();
+</script>
