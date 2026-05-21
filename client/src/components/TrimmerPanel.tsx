@@ -4,35 +4,44 @@ import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download, RotateCcw } from 'lucide-react';
 import { AudioTrimmer } from './AudioTrimmer';
-import { LiveWaveform } from './LiveWaveform';
 
 interface TrimmerPanelProps {
   audioBuffer: AudioBuffer | null;
   audioContext: AudioContext | null;
   analyserNode: AnalyserNode | null;
+  audioUrl?: string; // Phase F-3f: Add audio URL prop for native playback
   onTrimComplete?: (blob: Blob) => void;
   onTrimChange?: (startTime: number, endTime: number) => void;
   trimStart?: number;
   trimEnd?: number;
 }
 
-export default function TrimmerPanel({ audioBuffer, audioContext, analyserNode, onTrimComplete, onTrimChange, trimStart = 0, trimEnd = 0 }: TrimmerPanelProps) {
+export default function TrimmerPanel({ 
+  audioBuffer, 
+  audioContext, 
+  analyserNode, 
+  audioUrl, // Phase F-3f: Accept audioUrl
+  onTrimComplete, 
+  onTrimChange, 
+  trimStart = 0, 
+  trimEnd = 0 
+}: TrimmerPanelProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [trimmer, setTrimmer] = useState<AudioTrimmer | null>(null);
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [waveformError, setWaveformError] = useState<string>(); // Phase F-3f: Track waveform errors
 
   useEffect(() => {
     if (audioBuffer && audioContext) {
       const newTrimmer = new AudioTrimmer(audioContext);
-      // loadAudioBuffer() بدلاً من loadAudio(getChannelData(0).buffer)
-      // لأن AudioBuffer جاهز ومفكوك مسبقاً — لا حاجة لإعادة decodeAudioData
       newTrimmer.loadAudioBuffer(audioBuffer);
       setTrimmer(newTrimmer);
       setDuration(newTrimmer.getDuration());
       setEndTime(newTrimmer.getDuration());
+      setWaveformError(undefined);
     } else {
       setTrimmer(null);
       setDuration(0);
@@ -40,6 +49,37 @@ export default function TrimmerPanel({ audioBuffer, audioContext, analyserNode, 
       setEndTime(0);
     }
   }, [audioBuffer, audioContext]);
+
+  // Phase F-3f: Handle audio element load
+  useEffect(() => {
+    if (!audioRef.current || !audioUrl) return;
+    
+    const handleLoadedMetadata = () => {
+      const dur = audioRef.current?.duration ?? 0;
+      if (dur > 0) {
+        setDuration(dur);
+        setEndTime(dur);
+        setWaveformError(undefined);
+      }
+    };
+
+    const handleError = () => {
+      console.error('[TrimmerPanel] Audio element error:', audioUrl);
+      // Phase F-3f: Only show error if file truly cannot load
+      if (audioRef.current?.error) {
+        setWaveformError('تعذر تحميل الملف الصوتي');
+      }
+    };
+
+    audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audioRef.current.addEventListener('error', handleError);
+    audioRef.current.src = audioUrl;
+
+    return () => {
+      audioRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audioRef.current?.removeEventListener('error', handleError);
+    };
+  }, [audioUrl]);
 
   const handleStartTimeChange = (value: number[]) => {
     const newStartTime = value[0];
@@ -121,8 +161,31 @@ export default function TrimmerPanel({ audioBuffer, audioContext, analyserNode, 
       </CardHeader>
       <CardContent className="space-y-6">
 
+        {/* Phase F-3f: Add hidden audio element for native playback */}
+        <audio
+          ref={audioRef}
+          crossOrigin="anonymous"
+          className="hidden"
+        />
+
+        {/* Phase F-3f: Show error only if file truly cannot load */}
+        {waveformError && duration === 0 && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3">
+            <p className="text-sm text-red-700 dark:text-red-300">{waveformError}</p>
+          </div>
+        )}
+
+        {/* Phase F-3f: Show graceful fallback if audio loads but waveform fails */}
+        {audioUrl && duration > 0 && (!audioContext || !analyserNode) && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded p-3">
+            <p className="text-sm text-amber-700 dark:text-amber-300">
+              تعذر عرض الموجة الصوتية، لكن يمكن تشغيل الصوت واستخدام التحديد بالوقت
+            </p>
+          </div>
+        )}
+
         {/* حالة: لا يوجد ملف صوتي محمّل بعد */}
-        {!audioBuffer && (
+        {!audioBuffer && !audioUrl && (
           <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
             <p className="text-sm text-amber-700 dark:text-amber-300">
               جاري تحميل الملف الصوتي للتقطيع...
