@@ -150,9 +150,44 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+// Inject analytics only when VITE_ANALYTICS_ENDPOINT is a real configured URL.
+// When the env var is missing (local dev, Vercel without the var set) no script
+// tag is emitted — prevents the literal-placeholder src and the resulting
+// ERR_HTTP2_PROTOCOL_ERROR / CSP violation.
+function vitePluginConditionalAnalytics(): Plugin {
+  return {
+    name: "conditional-analytics",
+    transformIndexHtml() {
+      const endpoint = process.env.VITE_ANALYTICS_ENDPOINT;
+      const websiteId = process.env.VITE_ANALYTICS_WEBSITE_ID;
+      if (!endpoint || !endpoint.startsWith("http") || !websiteId) return;
+      return [
+        {
+          tag: "script",
+          attrs: { defer: true, src: `${endpoint}/umami`, "data-website-id": websiteId },
+          injectTo: "body",
+        },
+      ];
+    },
+  };
+}
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const isProduction = mode === "production";
+  // vitePluginManusRuntime injects a large inline <script> at build time.
+  // Inline scripts are blocked by our CSP (no 'unsafe-inline') in production,
+  // and the plugin is only needed for the Manus dev environment.
+  const runtimePlugin = isProduction ? [] : [vitePluginManusRuntime()];
+  const plugins = [
+    react(),
+    tailwindcss(),
+    jsxLocPlugin(),
+    ...runtimePlugin,
+    vitePluginManusDebugCollector(),
+    vitePluginConditionalAnalytics(),
+  ];
+
+  return {
   plugins,
   resolve: {
     alias: {
@@ -205,4 +240,5 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
+  };
 });
