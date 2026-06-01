@@ -190,12 +190,11 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
         onTimeUpdate?.(t);
       });
 
-      // في WaveSurfer v7 الـ seek event يُعطي progress (0-1) لا ثوانٍ
-      ws.on("seek", (progress: number) => {
+      // في WaveSurfer v7 الـ seeking event يُعطي currentTime بالثواني مباشرةً
+      ws.on("seeking", (currentTime: number) => {
         if (cancelled) return;
-        const t = progress * ws.getDuration();
-        setCurrentTime(t);
-        onTimeUpdate?.(t);
+        setCurrentTime(currentTime);
+        onTimeUpdate?.(currentTime);
       });
 
       ws.on("play",   () => { if (!cancelled) setIsPlaying(true); });

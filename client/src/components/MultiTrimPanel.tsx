@@ -971,7 +971,7 @@ export default function MultiTrimPanel({ onUseInPlayer }: MultiTrimPanelProps) {
                               editableRanges={
                                 (silenceAnalysis[entry.id] ?? [])
                                   .filter(s => s.enabled)
-                                  .map(s => ({ id: s.id, startSec: s.startSec, endSec: s.endSec, label: "🔇", color: "#ef4444" }))
+                                  .map(s => ({ id: s.id, startSec: s.startSec, endSec: s.endSec, label: "🔇", color: "#ef4444", enabled: true }))
                               }
                               onDeleteRange={async (s, e) => {
                                 try {

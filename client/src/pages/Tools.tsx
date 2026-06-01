@@ -136,9 +136,9 @@ function normalizeDeleteRanges(
 interface EffectExportPanelProps {
   waveformDuration:  number;
   effectExportFmt:   "wav" | "mp3";
-  effectExportBr:    128 | 192;
+  effectExportBr:    96 | 128 | 192;
   isEffectExporting: boolean;
-  onSelectFmt:       (fmt: "wav" | "mp3", br?: 128 | 192) => void;
+  onSelectFmt:       (fmt: "wav" | "mp3", br?: 96 | 128 | 192) => void;
   onExport:          () => void;
 }
 function EffectExportPanel({
@@ -458,8 +458,8 @@ export default function Tools() {
   const [deleteConfirm, setDeleteConfirm] = useState<{
     deleteRatio: number; totalToDelete: number;
     estimatedFinal: number; normalized: Array<{start:number;end:number}>;
-    buf: AudioBuffer;
   } | null>(null);
+  const deleteConfirmBufRef = useRef<AudioBuffer | null>(null);
   /** نتائج تشخيصية تُعرض بعد الكشف في VAD mode */
   const [silenceDiagnostics, setSilenceDiagnostics]     = useState<{
     noiseFloorDb: number; effectiveThresholdDb: number;
@@ -883,7 +883,7 @@ export default function Tools() {
   const [transcriptProgress, setTranscriptProgress] = useState(0);
   const [transcriptText, setTranscriptText]         = useState("");
   const [transcriptError, setTranscriptError]       = useState("");
-  const [transcriptLang, setTranscriptLang]         = useState<"ar"|"auto">("ar");
+  const [transcriptLang, setTranscriptLang]         = useState<"ar"|"auto"|"en">("ar");
 
   // ── Effect export panel state (مشترك بين Clarity/Compression/EQ) ─────────
   const [showEffectExport, setShowEffectExport]   = useState(false);
@@ -1109,7 +1109,7 @@ export default function Tools() {
       const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
       
       if (!originalAudioBufferRef) {
-        setOriginalAudioBufferRef(buf.clone ? buf.clone() : buf);
+        setOriginalAudioBufferRef(buf);
         if (!originalAudioUrl) {
           const origWav = AudioTrimmerEngine.toWav(buf);
           const origUrl = URL.createObjectURL(origWav);
@@ -1318,15 +1318,14 @@ export default function Tools() {
           break;
         case "ArrowLeft":
           e.preventDefault();
-          wf?.seekBy(e.shiftKey ? -1 : -5);
+          if (wf) wf.seek(Math.max(0, wf.getCurrentTime() + (e.shiftKey ? -1 : -5)));
           break;
         case "ArrowRight":
           e.preventDefault();
-          wf?.seekBy(e.shiftKey ? 1 : 5);
+          if (wf) wf.seek(wf.getCurrentTime() + (e.shiftKey ? 1 : 5));
           break;
         case "KeyM":
           e.preventDefault();
-          wf?.toggleMute?.();
           break;
         case "Escape":
           // إغلاق الأداة النشطة
@@ -1334,11 +1333,11 @@ export default function Tools() {
           break;
         case "Home":
           e.preventDefault();
-          wf?.seekTo(0);
+          wf?.seek(0);
           break;
         case "End":
           e.preventDefault();
-          if (currentAudio) wf?.seekTo(waveformDuration);
+          if (currentAudio) wf?.seek(waveformDuration);
           break;
       }
     };
@@ -1467,7 +1466,8 @@ export default function Tools() {
     setTranscriptText(""); setTranscriptError("");
 
     const audio       = new Audio(currentAudio.url);
-    const recognition = new SR() as SpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const recognition = new SR() as any;
     recognition.lang             = transcriptLang === "ar" ? "ar-SA" : "en-US";
     recognition.continuous       = true;
     recognition.interimResults   = true;
@@ -1476,7 +1476,8 @@ export default function Tools() {
     let finalText      = "";
     let recRunning     = true;
 
-    recognition.onresult = (e: SpeechRecognitionEvent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (e: any) => {
       let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const t = e.results[i][0].transcript;
@@ -1489,7 +1490,8 @@ export default function Tools() {
       }
     };
 
-    recognition.onerror = (e: SpeechRecognitionErrorEvent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onerror = (e: any) => {
       if (e.error === "aborted" || e.error === "no-speech") return;
       if (e.error === "not-allowed") {
         setTranscriptError("لم يُسمح بالوصول للميكروفون — اضغط على أيقونة القفل بجانب الرابط ثم أعد المحاولة");
@@ -1804,7 +1806,8 @@ export default function Tools() {
 
       // ── Soft warn: أكثر من 70% أو أقل من 5 دقائق → Modal تأكيد ───────
       if (deleteRatio > 0.70 || estimatedFinal < 300) {
-        setDeleteConfirm({ deleteRatio, totalToDelete, estimatedFinal, normalized, buf });
+        deleteConfirmBufRef.current = buf;
+        setDeleteConfirm({ deleteRatio, totalToDelete, estimatedFinal, normalized });
         return; // ننتظر تأكيد المستخدم
       }
 
@@ -2381,9 +2384,9 @@ export default function Tools() {
                           <span>هذا الحذف سيُزيل {(deletionRatio*100).toFixed(0)}% من الملف — راجع النطاقات بعناية</span>
                         </div>
                       )}
-                      {decisionSummary?.toReview > 0 && (
+                      {(decisionSummary?.reviewCount ?? 0) > 0 && (
                         <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
-                          · {decisionSummary.toReview} فترة تحتاج مراجعة — لن تُحذف تلقائياً
+                          · {decisionSummary!.reviewCount} فترة تحتاج مراجعة — لن تُحذف تلقائياً
                         </p>
                       )}
                       <p className="text-xs text-slate-400 mt-1.5">
@@ -2664,7 +2667,7 @@ export default function Tools() {
                                 e.stopPropagation();
                                 // أوقف أي تشغيل سابق
                                 stopSilenceLoop();
-                                const srcBuf = processedSilenceResult?.buffer ?? silenceAudioBuffer;
+                                const srcBuf = (processedSilenceResult as { buffer: AudioBuffer } | null)?.buffer ?? silenceAudioBuffer;
                                 if (!srcBuf) { toast.error("لا يوجد ملف للتشغيل"); return; }
                                 // شغّل المقطع مع هامش 0.3 ثانية قبله وبعده
                                 const s = Math.max(0, seg.startSec - 0.3);
@@ -3442,7 +3445,7 @@ export default function Tools() {
     id:       s.id,
     startSec: s.startSec,
     endSec:   s.endSec,
-    color:    s.enabled ? "#ef4444" : "#94a3b8",
+    color:    s.enabled ? "red" : "gray",
     label:    s.enabled ? "✂" : "—",
   }));
 
@@ -3486,7 +3489,7 @@ export default function Tools() {
               <div className="grid grid-cols-3 gap-2 text-xs text-center">
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-2">
                   <p className="text-slate-400">المدة الأصلية</p>
-                  <p className="font-mono font-bold">{SilenceProcessor.formatDuration(deleteConfirm.buf.duration)}</p>
+                  <p className="font-mono font-bold">{SilenceProcessor.formatDuration(deleteConfirmBufRef.current?.duration ?? 0)}</p>
                 </div>
                 <div className="bg-red-50 dark:bg-red-950 rounded-lg p-2">
                   <p className="text-red-400">يُحذف</p>
@@ -3509,7 +3512,7 @@ export default function Tools() {
                   className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >إلغاء</button>
                 <button
-                  onClick={() => doApplyConfirmed(deleteConfirm.buf, deleteConfirm.normalized)}
+                  onClick={() => doApplyConfirmed(deleteConfirmBufRef.current!, deleteConfirm.normalized)}
                   className="flex-1 px-4 py-2.5 text-sm font-bold rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors"
                 >نعم، احذف المحدد</button>
               </div>

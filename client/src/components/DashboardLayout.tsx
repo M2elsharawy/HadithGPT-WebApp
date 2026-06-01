@@ -48,7 +48,8 @@ const TIPS = [
 ];
 
 function AppSidebar({ user, logout }: { user: any; logout: () => void }) {
-  const { isCollapsed, toggleSidebar } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
+  const isCollapsed = state === "collapsed";
   const [location, setLocation] = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [tipIdx, setTipIdx] = useState(0);
@@ -191,8 +192,7 @@ function AppSidebar({ user, logout }: { user: any; logout: () => void }) {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { loading, user } = useAuth();
-  const { logout } = useAuth();
+  const { isLoading: loading, user, logout } = useAuth();
 
   if (loading) return <DashboardLayoutSkeleton/>;
 

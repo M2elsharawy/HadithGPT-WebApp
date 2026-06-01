@@ -827,9 +827,9 @@ export default function WaveformEditor({
         setSelStart(prev => prev !== null ? applySnap(prev, "start") : prev);
         setSelEnd  (prev => prev !== null ? applySnap(prev, "end")   : prev);
       }
-    } else if (mode === "start") {
+    } else if (mode === "resize-start") {
       setSelStart(prev => prev !== null ? applySnap(prev, "start") : prev);
-    } else if (mode === "end") {
+    } else if (mode === "resize-end") {
       setSelEnd  (prev => prev !== null ? applySnap(prev, "end")   : prev);
     }
     // move mode: snap both edges
@@ -841,7 +841,7 @@ export default function WaveformEditor({
     if (canvasRef.current) canvasRef.current.style.cursor = getCursor(e.clientX);
 
     // ── Auto-preview عند اكتمال التحديد ───────────────────────────────────
-    if (mode === "create" || mode === "start" || mode === "end" || mode === "move") {
+    if (mode === "create" || mode === "resize-start" || mode === "resize-end" || mode === "move") {
       // نقرأ القيم مباشرة بعد setState (ستُحدَّث في الـ render التالي)
       setTimeout(() => {
         setSelStart(s => {
@@ -881,9 +881,9 @@ export default function WaveformEditor({
           setSelStart(prev => prev !== null ? applySnap(prev, "start") : prev);
           setSelEnd  (prev => prev !== null ? applySnap(prev, "end")   : prev);
         }
-      } else if (mode === "start") {
+      } else if (mode === "resize-start") {
         setSelStart(prev => prev !== null ? applySnap(prev, "start") : prev);
-      } else if (mode === "end") {
+      } else if (mode === "resize-end") {
         setSelEnd  (prev => prev !== null ? applySnap(prev, "end")   : prev);
       } else if (mode === "move") {
         setSelStart(prev => prev !== null ? applySnap(prev, "start") : prev);
@@ -983,9 +983,9 @@ export default function WaveformEditor({
           });
         }, 50);
       }
-    } else if (mode === "start") {
+    } else if (mode === "resize-start") {
       setSelStart(prev => prev !== null ? applySnap(prev, "start") : prev);
-    } else if (mode === "end") {
+    } else if (mode === "resize-end") {
       setSelEnd  (prev => prev !== null ? applySnap(prev, "end")   : prev);
     } else if (mode === "move") {
       setSelStart(prev => prev !== null ? applySnap(prev, "start") : prev);
@@ -1177,7 +1177,6 @@ export default function WaveformEditor({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onKeyDown={handleKeyDown}
-          style={{ touchAction: "none" }}
         />
 
         {/* ── Floating action tooltip — position:fixed يتجاوز أي overflow:hidden ── */}

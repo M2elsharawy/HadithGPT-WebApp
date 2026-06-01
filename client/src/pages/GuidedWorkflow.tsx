@@ -244,6 +244,7 @@ export default function GuidedWorkflow() {
         startSec:    s.startSec,
         endSec:      s.endSec,
         durationSec: s.durationSec,
+        enabled:     true,
       }));
 
       const enriched = SmartPrayerAnalyzer.analyze(rawSegments, rmsFrames, {

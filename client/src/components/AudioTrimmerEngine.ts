@@ -204,10 +204,10 @@ export class AudioTrimmerEngine {
     const fadeSamples = Math.floor(fadeDurationSec * sr);
 
     // نسخ وتعديل البيانات لكل قناة
-    const channelData: Float32Array[] = [];
+    const channelData: Float32Array<ArrayBuffer>[] = [];
     for (let ch = 0; ch < numCh; ch++) {
       const src = buffer.getChannelData(ch);
-      const slice = src.slice(startSample, endSample);
+      const slice = src.slice(startSample, endSample) as Float32Array<ArrayBuffer>;
       AudioTrimmerEngine.applyFadeIn(slice, fadeSamples);
       AudioTrimmerEngine.applyFadeOut(slice, fadeSamples);
       channelData.push(slice);

@@ -6,5 +6,6 @@ export function useAuth() {
     },
     isLoading: false,
     isAuthenticated: true,
+    logout: () => {},
   };
 }
