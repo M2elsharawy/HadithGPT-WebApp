@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Music, History, Settings, PanelLeft, LogOut, Zap, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { CLIENT_ONLY_MODE } from "@/lib/clientMode";
 
 const navItems = [
   {
@@ -147,7 +148,7 @@ function AppSidebar({ user, logout }: { user: any; logout: () => void }) {
         </button>
 
         {/* User / Local mode */}
-        {user ? (
+        {user && !CLIENT_ONLY_MODE ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-accent transition-colors focus:outline-none">
@@ -180,7 +181,9 @@ function AppSidebar({ user, logout }: { user: any; logout: () => void }) {
             </div>
             {!isCollapsed && (
               <div className="min-w-0">
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 leading-none">وضع محلي</p>
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 leading-none">
+                  {CLIENT_ONLY_MODE ? "نسخة تجريبية محلية" : "وضع محلي"}
+                </p>
                 <p className="text-xs text-slate-400 mt-0.5 leading-none">خصوصية تامة</p>
               </div>
             )}
