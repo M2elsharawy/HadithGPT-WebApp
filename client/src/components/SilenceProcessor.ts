@@ -489,7 +489,7 @@ export class SilenceProcessor {
 
       for (let w = 1; w <= numWindows; w++) {
         const winType: "audio" | "silence" =
-          w < numWindows ? (isSilent[w] === 0 ? "audio" : "silence") : (currentType === "audio" ? "silence" : "audio");
+          w < numWindows ? (isSilent[w] === 0 ? "audio" : "silence") : currentType;
 
         if (winType !== currentType || w === numWindows) {
           segments.push({

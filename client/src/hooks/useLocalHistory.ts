@@ -39,7 +39,7 @@ export function useLocalHistory() {
   const addEntry = useCallback((entry: Omit<HistoryEntry, "id" | "date">) => {
     setEntries(prev => {
       const next = [
-        { ...entry, id: `h_${Date.now()}`, date: new Date().toISOString() },
+        { ...entry, id: crypto.randomUUID(), date: new Date().toISOString() },
         ...prev,
       ].slice(0, MAX);
       save(next);
