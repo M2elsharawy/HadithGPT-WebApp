@@ -74,6 +74,8 @@ export interface SilenceProcessorReport {
   finalDurationSec: number;
   /** قائمة فترات الصمت التي تم إزالتها */
   removedSegments: SilenceSegment[];
+  /** قيم RMS بالـ dB لكل نافذة — تُستخدم من SmartPrayerAnalyzer */
+  rmsFrames?: Float32Array;
   /** بيانات VAD التشخيصية — موجودة فقط عند detectionMode = "vad" */
   vadFrames?: VADFrameData[];
   /** noise floor المكتشف تلقائياً بالـ dB — موجود فقط عند detectionMode = "vad" */
@@ -596,6 +598,12 @@ export class SilenceProcessor {
 
     onProgress?.({ stage: "اكتملت المعالجة ✓", percent: 100 });
 
+    // تحويل rmsValues إلى dB للاستخدام في SmartPrayerAnalyzer
+    const rmsDbFrames = new Float32Array(numWindows);
+    for (let w = 0; w < numWindows; w++) {
+      rmsDbFrames[w] = rmsValues[w] < 1e-9 ? -100 : 20 * Math.log10(rmsValues[w]);
+    }
+
     const report: SilenceProcessorReport = {
       removedCount: removedSegments.length,
       totalRemovedSec: Math.max(0, totalRemovedSec),
@@ -605,6 +613,7 @@ export class SilenceProcessor {
       vadFrames,
       detectedNoiseFloorDb,
       effectiveThresholdDb,
+      rmsFrames: rmsDbFrames,
     };
 
     return { blob, report };
