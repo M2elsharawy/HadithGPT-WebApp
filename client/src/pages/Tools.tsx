@@ -1894,7 +1894,7 @@ export default function Tools() {
       setDetectedSegments([]); setSilenceReport(null);
       setSilenceProgress(100);
       addSilenceChip(`✂ ${normalized.length} مقطع`);
-      toast.success(`✓ حُذف ${normalized.length} نطاق — الناتج: ${outBuffer.duration.toFixed(0)}s`);
+      toast.success(`✓ تم حذف ${normalized.length} فترة صمت. إذا أردت دقة أعلى يمكنك إعادة الكشف.`);
     } catch (err) {
       const e = err instanceof Error ? err : new Error("خطأ");
       // لا نُغيّر currentAudio عند الفشل — المشغل يحتفظ بالملف السابق
