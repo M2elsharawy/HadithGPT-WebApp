@@ -216,9 +216,8 @@ export class SilenceProcessor {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`فشل تحميل الملف: HTTP ${response.status}`);
     const arrayBuffer = await response.arrayBuffer();
-    // OfflineAudioContext works in both main thread and Web Workers
-    const ctx = new OfflineAudioContext(1, 1, 44100);
-    return ctx.decodeAudioData(arrayBuffer);
+    const ctx = new AudioContext();
+    try { return await ctx.decodeAudioData(arrayBuffer); } finally { await ctx.close(); }
   }
 
   /**
@@ -557,12 +556,7 @@ export class SilenceProcessor {
     // ── 8. بناء الـ AudioBuffer الناتج ───────────────────────────────────────
     onProgress?.({ stage: "جاري بناء الملف الناتج...", percent: 65 });
 
-    // OfflineAudioContext works in both main thread and Web Workers
-    const tempCtx = new OfflineAudioContext(
-      numberOfChannels,
-      Math.max(1, totalOutputSamples),
-      sampleRate,
-    );
+    const tempCtx = new AudioContext();
     const outputBuffer = tempCtx.createBuffer(
       numberOfChannels,
       Math.max(1, totalOutputSamples),

@@ -655,15 +655,14 @@ export default function Tools() {
 
       // 1. VAD silence detection
       setAutoCleanStage("جاري تحليل الذبذبات..."); setAutoCleanProgress(5);
-      const silenceWorkerResult1 = await audioWorker.runSilence(
+      const { report } = await SilenceProcessor.process(
         currentAudio.url,
         { thresholdDb: -50, minSilenceDuration: 1.4, replacementGap: 0.25,
           detectionMode: "vad", adaptiveHeadroomDb: 12 },
-        (percent, stage) => {
+        ({ stage, percent }) => {
           setAutoCleanStage(stage); setAutoCleanProgress(Math.round(percent * 0.35));
         },
       );
-      const { report } = silenceWorkerResult1;
 
       const rawSegs = report.removedSegments.map((s, i) => ({
         id: `ac-${i}`, startSec: s.startSec, endSec: s.endSec,
@@ -1701,7 +1700,7 @@ export default function Tools() {
       const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
       setSilenceAudioBuffer(buf);
 
-      const silenceWorkerResult2 = await audioWorker.runSilence(
+      const { report } = await SilenceProcessor.process(
         currentAudio.url,
         {
           thresholdDb: silenceThresholdDb,
@@ -1710,9 +1709,8 @@ export default function Tools() {
           detectionMode: silenceDetectionMode,
           adaptiveHeadroomDb: 12,
         },
-        (percent, stage) => { setSilenceStage(stage); setSilenceProgress(Math.min(percent, 90)); },
+        ({ stage, percent }) => { setSilenceStage(stage); setSilenceProgress(Math.min(percent, 90)); },
       );
-      const { report } = silenceWorkerResult2;
       setSilenceReport(report);
       // حفظ التشخيصات إذا كانت متاحة (VAD mode)
       if (report.detectedNoiseFloorDb !== undefined && report.effectiveThresholdDb !== undefined) {
