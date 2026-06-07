@@ -2163,6 +2163,23 @@ export default function Tools() {
                     </div>
                   </button>
 
+                  {/* وضع ذكي */}
+                  <button onClick={() => {
+                    setSilenceMode("smart");
+                    toast.success("✓ وضع الصلاة الذكي — يحذف الأركان والتكبيرات تلقائياً");
+                  }}
+                    className={`flex flex-col gap-2 p-4 rounded-2xl border-2 text-right transition-all hover:scale-[1.02] ${
+                      silenceMode === "smart"
+                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950/60"
+                        : "border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 bg-white dark:bg-slate-900"
+                    }`}>
+                    <span className="text-2xl">✨</span>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">ذكي</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">يحذف الأركان والتكبيرات ويبقي التلاوة</p>
+                    </div>
+                  </button>
+
                   {/* وضع دقيق */}
                   <button onClick={() => {
                     setSilenceThresholdDb(-20); setSilenceMinDuration(0.5);
