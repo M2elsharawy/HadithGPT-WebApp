@@ -1,6 +1,5 @@
 import { useRef, useCallback } from 'react';
 import type { WorkerRequest, WorkerResponse } from '../workers/audio-processor.worker';
-import type { SilenceProcessorOptions } from '../components/SilenceProcessor';
 import type { EnhancementOptions } from '../components/enhancement/types';
 
 type ProgressCallback = (percent: number, stage: string) => void;
@@ -43,20 +42,6 @@ export function useAudioWorker() {
     return workerRef.current;
   }, []);
 
-  const runSilence = useCallback(async (
-    audioUrl: string,
-    options: Partial<SilenceProcessorOptions>,
-    onProgress?: ProgressCallback,
-  ) => {
-    const id = ++requestCounter;
-    const worker = getWorker();
-    return new Promise<Extract<WorkerResponse, { type: 'silence-done' }>>((resolve, reject) => {
-      pendingRef.current.set(id, { resolve: resolve as (v: unknown) => void, reject, onProgress });
-      const req: WorkerRequest = { id, type: 'silence', audioUrl, options };
-      worker.postMessage(req);
-    });
-  }, [getWorker]);
-
   const runEnhance = useCallback(async (
     buffer: AudioBuffer,
     options: EnhancementOptions,
@@ -89,5 +74,5 @@ export function useAudioWorker() {
     workerRef.current = null;
   }, []);
 
-  return { runSilence, runEnhance, terminate };
+  return { runEnhance, terminate };
 }
