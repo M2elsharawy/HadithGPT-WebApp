@@ -661,6 +661,7 @@ export class SilenceProcessor {
   static buildFileName(originalName: string): string {
     const dot = originalName.lastIndexOf(".");
     const base = dot !== -1 ? originalName.slice(0, dot) : originalName;
-    return `${base}-no-silence.wav`;
+    const cleanBase = base.replace(/(-no-silence)+$/, '');
+    return `${cleanBase}-no-silence.wav`;
   }
 }
