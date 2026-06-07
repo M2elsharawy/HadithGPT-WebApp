@@ -411,6 +411,7 @@ export default function Tools() {
     appSettings.silenceGap ?? DEFAULT_SILENCE_OPTIONS.replacementGap);
   /** وضع الكشف: "rms" = قياسي (default) | "vad" = متقدم */
   const [silenceDetectionMode, setSilenceDetectionMode] = useState<"rms" | "vad">("rms");
+  const [silenceMode, setSilenceMode] = useState<"default" | "smart">("default");
   /** حذف كل المحدد بدون قيود maxRemovableRatio */
   const [forceDeleteAll, setForceDeleteAll]             = useState(false);
 
@@ -1754,11 +1755,59 @@ export default function Tools() {
   // ── Silence: apply selected segments ─────────────────────────────────────
   const handleApplySilence = async () => {
     if (!currentAudio) { toast.error("لا يوجد ملف"); return; }
-    const enabledSegs = detectedSegments.filter(s => s.enabled);
-    if (enabledSegs.length === 0) { toast.error("لا توجد نطاقات مُفعَّلة للحذف"); return; }
 
     setIsRemovingSilence(true); setSilenceProgress(0);
     try {
+      // ── وضع ذكي — pipeline كامل بضغطة واحدة ────────────────────────────
+      if (silenceMode === "smart") {
+        const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
+        const { processPrayerMode } = await import('@/components/PrayerModeProcessor');
+        const result = await processPrayerMode(
+          currentAudio.url,
+          buf,
+          (pct, stage) => { setSilenceProgress(pct); setSilenceStage(stage); },
+        );
+
+        if (result.removedCount === 0) {
+          toast.success("لم يُعثر على مقاطع قابلة للحذف في هذا الملف");
+          return;
+        }
+
+        const outBuffer = result.buffer;
+        setSilenceProgress(85);
+        setSilenceResultBuffer(outBuffer);
+        const newName = SilenceProcessor.buildFileName(currentAudio?.name ?? "audio");
+        setSilenceResultName(newName);
+        const dot  = newName.lastIndexOf(".");
+        const base = dot !== -1 ? newName.slice(0, dot) : newName;
+        setSilenceExportName(`${base}.wav`);
+        const outWav = AudioTrimmerEngine.toWav(outBuffer);
+        const newUrl = URL.createObjectURL(outWav);
+        setActiveAudio(newUrl, newName);
+        setSilenceAudioBuffer(outBuffer);
+        setProcessedSilenceResult({
+          buffer:           outBuffer,
+          url:              newUrl,
+          name:             newName,
+          originalDuration: result.originalSec,
+          newDuration:      result.finalSec,
+          removedDuration:  result.removedSec,
+          removedCount:     result.removedCount,
+        });
+        setDetectedSegments([]); setSilenceReport(null);
+        setSilenceProgress(100);
+        addSilenceChip(`✂ ${result.removedCount} مقطع`);
+        toast.success(
+          `✓ حُذف ${result.removedCount} مقطع (${SilenceProcessor.formatDuration(result.removedSec)}) — ` +
+          `المدة الجديدة: ${SilenceProcessor.formatDuration(result.finalSec)}`
+        );
+        return;
+      }
+
+      // ── الوضع العادي ─────────────────────────────────────────────────────
+      const enabledSegs = detectedSegments.filter(s => s.enabled);
+      if (enabledSegs.length === 0) { toast.error("لا توجد نطاقات مُفعَّلة للحذف"); return; }
+
       const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
       setSilenceProgress(40);
 
@@ -2188,10 +2237,10 @@ export default function Tools() {
               {/* ── Mode cards — خطوة 1 ────────────────────────────────── */}
               <div className="p-4 space-y-3">
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">اختر الوضع المناسب</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
 
                   {/* وضع الصلاة */}
-                  <button onClick={applyPrayerPreset}
+                  <button onClick={() => { applyPrayerPreset(); setSilenceMode("default"); }}
                     className={`flex flex-col gap-2 p-4 rounded-2xl border-2 text-right transition-all hover:scale-[1.02] ${
                       silenceThresholdDb===-10&&silenceMinDuration===1.4&&silenceReplacementGap===5
                         ? "border-violet-500 bg-violet-50 dark:bg-violet-950/60"
@@ -2204,10 +2253,28 @@ export default function Tools() {
                     </div>
                   </button>
 
+                  {/* وضع ذكي */}
+                  <button onClick={() => {
+                    setSilenceMode("smart");
+                    toast.success("✓ وضع الصلاة الذكي — يحذف الأركان والتكبيرات تلقائياً");
+                  }}
+                    className={`flex flex-col gap-2 p-4 rounded-2xl border-2 text-right transition-all hover:scale-[1.02] ${
+                      silenceMode === "smart"
+                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950/60"
+                        : "border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 bg-white dark:bg-slate-900"
+                    }`}>
+                    <span className="text-2xl">✨</span>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">ذكي</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">يحذف الأركان والتكبيرات ويبقي التلاوة</p>
+                    </div>
+                  </button>
+
                   {/* وضع دقيق */}
                   <button onClick={() => {
                     setSilenceThresholdDb(-20); setSilenceMinDuration(0.5);
                     setSilenceReplacementGap(0.25); setSilenceDetectionMode("vad");
+                    setSilenceMode("default");
                     if (!smartModeEnabled) setSmartModeEnabled(true);
                     toast.success("✓ وضع الاكتشاف الدقيق");
                   }}

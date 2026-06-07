@@ -74,6 +74,8 @@ export interface SilenceProcessorReport {
   finalDurationSec: number;
   /** قائمة فترات الصمت التي تم إزالتها */
   removedSegments: SilenceSegment[];
+  /** قيم RMS بالـ dB لكل نافذة — تُستخدم من SmartPrayerAnalyzer */
+  rmsFrames?: Float32Array;
   /** بيانات VAD التشخيصية — موجودة فقط عند detectionMode = "vad" */
   vadFrames?: VADFrameData[];
   /** noise floor المكتشف تلقائياً بالـ dB — موجود فقط عند detectionMode = "vad" */
@@ -216,9 +218,8 @@ export class SilenceProcessor {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`فشل تحميل الملف: HTTP ${response.status}`);
     const arrayBuffer = await response.arrayBuffer();
-    // OfflineAudioContext works in both main thread and Web Workers
-    const ctx = new OfflineAudioContext(1, 1, 44100);
-    return ctx.decodeAudioData(arrayBuffer);
+    const ctx = new AudioContext();
+    try { return await ctx.decodeAudioData(arrayBuffer); } finally { await ctx.close(); }
   }
 
   /**
@@ -557,12 +558,7 @@ export class SilenceProcessor {
     // ── 8. بناء الـ AudioBuffer الناتج ───────────────────────────────────────
     onProgress?.({ stage: "جاري بناء الملف الناتج...", percent: 65 });
 
-    // OfflineAudioContext works in both main thread and Web Workers
-    const tempCtx = new OfflineAudioContext(
-      numberOfChannels,
-      Math.max(1, totalOutputSamples),
-      sampleRate,
-    );
+    const tempCtx = new AudioContext();
     const outputBuffer = tempCtx.createBuffer(
       numberOfChannels,
       Math.max(1, totalOutputSamples),
@@ -602,6 +598,12 @@ export class SilenceProcessor {
 
     onProgress?.({ stage: "اكتملت المعالجة ✓", percent: 100 });
 
+    // تحويل rmsValues إلى dB للاستخدام في SmartPrayerAnalyzer
+    const rmsDbFrames = new Float32Array(numWindows);
+    for (let w = 0; w < numWindows; w++) {
+      rmsDbFrames[w] = rmsValues[w] < 1e-9 ? -100 : 20 * Math.log10(rmsValues[w]);
+    }
+
     const report: SilenceProcessorReport = {
       removedCount: removedSegments.length,
       totalRemovedSec: Math.max(0, totalRemovedSec),
@@ -611,6 +613,7 @@ export class SilenceProcessor {
       vadFrames,
       detectedNoiseFloorDb,
       effectiveThresholdDb,
+      rmsFrames: rmsDbFrames,
     };
 
     return { blob, report };
