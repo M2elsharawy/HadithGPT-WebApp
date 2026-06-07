@@ -227,6 +227,7 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
             } else {
               const objectUrl = URL.createObjectURL(blob);
               wsRef.current.load(objectUrl);
+              wsRef.current.once("ready", () => URL.revokeObjectURL(objectUrl));
             }
           })
           .catch(() => {

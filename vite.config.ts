@@ -178,10 +178,13 @@ export default defineConfig(({ mode }) => {
   // Inline scripts are blocked by our CSP (no 'unsafe-inline') in production,
   // and the plugin is only needed for the Manus dev environment.
   const runtimePlugin = isProduction ? [] : [vitePluginManusRuntime()];
+  // jsxLocPlugin injects source file paths into JSX as data-loc attributes.
+  // In production this leaks local file paths into the shipped bundle.
+  const jsxLocPlugins = isProduction ? [] : [jsxLocPlugin()];
   const plugins = [
     react(),
     tailwindcss(),
-    jsxLocPlugin(),
+    ...jsxLocPlugins,
     ...runtimePlugin,
     vitePluginManusDebugCollector(),
     vitePluginConditionalAnalytics(),

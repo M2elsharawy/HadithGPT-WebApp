@@ -29,9 +29,9 @@ function AppRoutes() {
   return (
     <DashboardLayout>
       <Switch>
-        <Route path={"/tools"} component={Tools} />
-        <Route path={"/history"} component={History} />
-        <Route path={"/settings"} component={Settings} />
+        <Route path={"/app/tools"} component={Tools} />
+        <Route path={"/app/history"} component={History} />
+        <Route path={"/app/settings"} component={Settings} />
         <Route component={Tools} />
       </Switch>
     </DashboardLayout>
@@ -41,7 +41,7 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="light" switchable>
         <TooltipProvider>
           <Toaster />
           <Router />

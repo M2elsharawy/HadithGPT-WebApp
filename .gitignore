@@ -47,3 +47,6 @@ Thumbs.db
 *.temp
 ~$*.docx
 
+# Phase experiment outputs and benchmark scripts (local only, never committed)
+phase-7*/
+scripts/

@@ -102,7 +102,7 @@ async function startServer() {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": safeContentType,
         },
-        body: req.body as Buffer,
+        body: req.body as unknown as BodyInit,
       });
       const data = await response.json();
       res.json(data);

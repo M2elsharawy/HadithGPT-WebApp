@@ -2,13 +2,16 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { Scissors, MicOff, Sliders, Layers, ShieldCheck, Cpu, ArrowLeft, Mic2, Zap } from "lucide-react";
 import { useEffect } from "react";
+import { CLIENT_ONLY_MODE } from "@/lib/clientMode";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (isAuthenticated) setLocation("/app/tools");
+    // In client-only mode the auth stub always returns isAuthenticated=true,
+    // so we skip the redirect to let users see the landing page.
+    if (isAuthenticated && !CLIENT_ONLY_MODE) setLocation("/app/tools");
   }, [isAuthenticated]);
 
   return (

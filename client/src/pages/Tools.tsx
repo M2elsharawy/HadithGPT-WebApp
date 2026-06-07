@@ -41,6 +41,7 @@ import type { EnhancementReport, HumRemovalOptions, NoiseReductionOptions, DeRev
 import WaveformPlayer, { WaveformPlayerHandle, WaveformMarker } from "@/components/WaveformPlayer";
 import WaveformEditor, { EditableRange } from "@/components/WaveformEditor";
 import { useLocalHistory } from "@/hooks/useLocalHistory";
+import { useAudioWorker } from "@/hooks/useAudioWorker";
 
 const MAX_FILE_SIZE_MB    = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -312,6 +313,7 @@ export default function Tools() {
   useAuth();
   const { settings: appSettings, update: updateSettings } = useAppSettings();
   const { addEntry: addHistoryEntry } = useLocalHistory();
+  const audioWorker = useAudioWorker();
 
   // ── Core state ───────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile]     = useState<File | null>(null);
@@ -653,14 +655,15 @@ export default function Tools() {
 
       // 1. VAD silence detection
       setAutoCleanStage("جاري تحليل الذبذبات..."); setAutoCleanProgress(5);
-      const { report } = await SilenceProcessor.process(
+      const silenceWorkerResult1 = await audioWorker.runSilence(
         currentAudio.url,
         { thresholdDb: -50, minSilenceDuration: 1.4, replacementGap: 0.25,
           detectionMode: "vad", adaptiveHeadroomDb: 12 },
-        ({ stage, percent }) => {
+        (percent, stage) => {
           setAutoCleanStage(stage); setAutoCleanProgress(Math.round(percent * 0.35));
-        }
+        },
       );
+      const { report } = silenceWorkerResult1;
 
       const rawSegs = report.removedSegments.map((s, i) => ({
         id: `ac-${i}`, startSec: s.startSec, endSec: s.endSec,
@@ -1124,27 +1127,38 @@ export default function Tools() {
         noiseReduction: { enabled: nrEnabled, strength: nrStrength, mode: "broadband" as const },
         deReverb:       { enabled: drEnabled, amount: drAmount },
       };
-      const result = await AudioEnhancementEngine.enhanceAudio(
+      const workerResult = await audioWorker.runEnhance(
         buf,
         options,
         (pct, stage) => { setEnhancementProgress(pct); setEnhancementStage(stage); },
       );
-      
-      setEnhancedAudioBufferRef(result.processedBuffer);
-      
+
+      const audioCtx = new AudioContext();
+      const outBuffer = audioCtx.createBuffer(
+        workerResult.channels.length,
+        workerResult.channels[0].length,
+        buf.sampleRate,
+      );
+      for (let ch = 0; ch < workerResult.channels.length; ch++) {
+        outBuffer.copyToChannel(workerResult.channels[ch], ch);
+      }
+      await audioCtx.close();
+
+      setEnhancedAudioBufferRef(outBuffer);
+
       // Phase F-2: Revoke old enhanced URL before creating new one
       if (enhancedAudioUrl && enhancedAudioUrl !== currentAudio.url) {
         URL.revokeObjectURL(enhancedAudioUrl);
       }
-      
-      const wav  = AudioTrimmerEngine.toWav(result.processedBuffer);
+
+      const wav  = AudioTrimmerEngine.toWav(outBuffer);
       const url  = URL.createObjectURL(wav);
       const name = currentAudio.name.replace(/\.[^.]+$/, "") + "-enhanced.wav";
-      
+
       setEnhancedAudioUrl(url);
       setPreviewMode('enhanced');
       setActiveAudio(url, name);
-      setEnhancementReport(result.report);
+      setEnhancementReport(workerResult.report);
       const fx = new Set(activeEffects); fx.add("تحسين متكامل");
       setActiveEffects(fx);
       toast.success("✓ تم تطبيق التحسين المتكامل — استخدم 'مقارنة' للمقارنة مع الأصلي");
@@ -1687,7 +1701,7 @@ export default function Tools() {
       const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
       setSilenceAudioBuffer(buf);
 
-      const { report } = await SilenceProcessor.process(
+      const silenceWorkerResult2 = await audioWorker.runSilence(
         currentAudio.url,
         {
           thresholdDb: silenceThresholdDb,
@@ -1696,8 +1710,9 @@ export default function Tools() {
           detectionMode: silenceDetectionMode,
           adaptiveHeadroomDb: 12,
         },
-        ({ stage, percent }) => { setSilenceStage(stage); setSilenceProgress(Math.min(percent, 90)); }
+        (percent, stage) => { setSilenceStage(stage); setSilenceProgress(Math.min(percent, 90)); },
       );
+      const { report } = silenceWorkerResult2;
       setSilenceReport(report);
       // حفظ التشخيصات إذا كانت متاحة (VAD mode)
       if (report.detectedNoiseFloorDb !== undefined && report.effectiveThresholdDb !== undefined) {
