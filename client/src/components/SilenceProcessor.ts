@@ -216,12 +216,9 @@ export class SilenceProcessor {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`فشل تحميل الملف: HTTP ${response.status}`);
     const arrayBuffer = await response.arrayBuffer();
-    const ctx = new AudioContext();
-    try {
-      return await ctx.decodeAudioData(arrayBuffer);
-    } finally {
-      await ctx.close();
-    }
+    // OfflineAudioContext works in both main thread and Web Workers
+    const ctx = new OfflineAudioContext(1, 1, 44100);
+    return ctx.decodeAudioData(arrayBuffer);
   }
 
   /**
@@ -560,14 +557,17 @@ export class SilenceProcessor {
     // ── 8. بناء الـ AudioBuffer الناتج ───────────────────────────────────────
     onProgress?.({ stage: "جاري بناء الملف الناتج...", percent: 65 });
 
-    // نستخدم AudioContext مؤقتاً لإنشاء الـ buffer فقط
-    const tempCtx = new AudioContext();
+    // OfflineAudioContext works in both main thread and Web Workers
+    const tempCtx = new OfflineAudioContext(
+      numberOfChannels,
+      Math.max(1, totalOutputSamples),
+      sampleRate,
+    );
     const outputBuffer = tempCtx.createBuffer(
       numberOfChannels,
       Math.max(1, totalOutputSamples),
       sampleRate
     );
-    await tempCtx.close();
 
     // نسخ البيانات chunk by chunk لجميع القنوات
     const channelWritePos = new Array(numberOfChannels).fill(0);
