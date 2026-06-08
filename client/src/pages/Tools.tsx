@@ -40,6 +40,7 @@ import { ENHANCEMENT_PRESETS, PRESET_LIST, DEFAULT_PRESET_ID, type PresetId } fr
 import type { EnhancementReport, HumRemovalOptions, NoiseReductionOptions, DeReverbOptions } from "@/components/enhancement/types";
 import WaveformPlayer, { WaveformPlayerHandle, WaveformMarker } from "@/components/WaveformPlayer";
 import WaveformEditor, { EditableRange } from "@/components/WaveformEditor";
+import PrayerMapPanel from "@/components/PrayerMapPanel";
 import { useLocalHistory } from "@/hooks/useLocalHistory";
 import { useAudioWorker } from "@/hooks/useAudioWorker";
 
@@ -501,6 +502,9 @@ export default function Tools() {
   // ── PrayerTransitionAnalyzer state ──────────────────────────────────────────
   const [transitionSegments, setTransitionSegments]       = useState<VoicedSegment[]>([]);
   const [showTransitionPanel, setShowTransitionPanel]     = useState(false);
+  // ── PrayerMapPanel state (وضع ذكي — مراجعة قبل الحذف) ──────────────────────
+  const [prayerSegments, setPrayerSegments]               = useState<VoicedSegment[]>([]);
+  const [showPrayerMap, setShowPrayerMap]                 = useState(false);
   const [isAnalyzingTransitions, setIsAnalyzingTransitions] = useState(false);
   const [transitionFilter, setTransitionFilter]           = useState<TransitionClass | "all">("all");
   // refs للـ result preview — لا useState حتى يكون الـ cleanup فورياً
@@ -1695,6 +1699,33 @@ export default function Tools() {
   // ── Silence: detect only (لا تُطبّق — فقط يكتشف ويعرض) ──────────────────
   const handleDetectSilence = async () => {
     if (!currentAudio) { toast.error("لا يوجد ملف"); return; }
+
+    // ── وضع ذكي: تحليل المقاطع الصوتية مباشرةً بدون SilenceProcessor ─────────
+    if (silenceMode === "smart") {
+      setIsDetectingSilence(true); setSilenceProgress(0); setSilenceStage("تحليل الأركان...");
+      setShowPrayerMap(false); setPrayerSegments([]);
+      setSilenceAudioBuffer(null); setProcessedSilenceResult(null); setNoSilenceFound(false);
+      try {
+        const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
+        setSilenceAudioBuffer(buf);
+        setSilenceProgress(40);
+        await new Promise(r => setTimeout(r, 10));
+        const result = PrayerTransitionAnalyzer.analyze(buf, -20);
+        const segs = result.voicedSegments.map(s => ({ ...s, enabled: s.safeToRemove }));
+        setPrayerSegments(segs);
+        setShowPrayerMap(true);
+        setSilenceProgress(100);
+        const nonQuran = segs.filter(s => s.classification !== "quran_likely").length;
+        toast.success(`تم تحليل ${segs.length} مقطع — ${nonQuran} مقطع غير قرآني للمراجعة`);
+      } catch (err) {
+        const e = err instanceof Error ? err : new Error("خطأ");
+        toast.error(`فشل التحليل: ${e.message}`);
+      } finally {
+        setIsDetectingSilence(false); setSilenceProgress(0); setSilenceStage("");
+      }
+      return;
+    }
+
     setIsDetectingSilence(true); setSilenceProgress(0); setSilenceStage("");
     setSilenceReport(null); setDetectedSegments([]); setSilenceAudioBuffer(null); setSilenceResultBuffer(null); setProcessedSilenceResult(null); setNoSilenceFound(false); setDecidedSegments([]); setDecisionSummary(null); setSmartOverrides({}); setShowSilenceSegmentList(false);
     try {
@@ -2014,6 +2045,67 @@ export default function Tools() {
     toast.success(`✓ تم حذف ${toDelete.length} مقطع`);
   };
 
+  // ── PrayerMapPanel handlers ───────────────────────────────────────────────
+  const handlePrayerToggle = (id: string) => {
+    setPrayerSegments(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
+  };
+
+  const handlePrayerSelectAll = (enabled: boolean) => {
+    setPrayerSegments(prev => prev.map(s => {
+      const isProtected = s.classification === "quran_likely" && s.confidence >= 0.95;
+      return isProtected ? s : { ...s, enabled };
+    }));
+  };
+
+  const handlePrayerApply = async () => {
+    if (!currentAudio) { toast.error("لا يوجد ملف"); return; }
+    const toDelete = prayerSegments
+      .filter(s => s.enabled)
+      .map(s => ({ start: s.startSec, end: s.endSec }))
+      .sort((a, b) => a.start - b.start);
+    if (toDelete.length === 0) { toast.error("لم تُحدّد أي مقطع للحذف"); return; }
+
+    setIsRemovingSilence(true); setSilenceProgress(0);
+    try {
+      const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
+      setSilenceProgress(40);
+      const normalized = normalizeDeleteRanges(toDelete, buf.duration);
+      const outBuffer = await AudioTrimmerEngine.deleteMultipleRanges(buf, normalized, 0, 0.02);
+      if (!outBuffer || outBuffer.duration < 1) {
+        toast.error("الناتج غير صالح — قلّل نطاقات الحذف"); return;
+      }
+      setSilenceProgress(85);
+      setSilenceResultBuffer(outBuffer);
+      const newName = SilenceProcessor.buildFileName(currentAudio.name);
+      setSilenceResultName(newName);
+      const dot  = newName.lastIndexOf(".");
+      const base = dot !== -1 ? newName.slice(0, dot) : newName;
+      setSilenceExportName(`${base}.wav`);
+      const outWav = AudioTrimmerEngine.toWav(outBuffer);
+      const newUrl = URL.createObjectURL(outWav);
+      setActiveAudio(newUrl, newName);
+      setSilenceAudioBuffer(outBuffer);
+      setProcessedSilenceResult({
+        buffer:           outBuffer,
+        url:              newUrl,
+        name:             newName,
+        originalDuration: buf.duration,
+        newDuration:      outBuffer.duration,
+        removedDuration:  buf.duration - outBuffer.duration,
+        removedCount:     normalized.length,
+      });
+      setShowPrayerMap(false); setPrayerSegments([]);
+      setSilenceProgress(100);
+      addSilenceChip(`✂ ${normalized.length} مقطع`);
+      toast.success(
+        `✓ حُذف ${normalized.length} مقطع (${SilenceProcessor.formatDuration(buf.duration - outBuffer.duration)}) — ` +
+        `المدة الجديدة: ${SilenceProcessor.formatDuration(outBuffer.duration)}`
+      );
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error("خطأ");
+      toast.error(`فشل الحذف: ${e.message}`);
+    } finally { setIsRemovingSilence(false); setSilenceProgress(0); }
+  };
 
   // ─── Workspace content by tool ─────────────────────────────────────────────
   const renderWorkspace = () => {
@@ -2397,6 +2489,19 @@ export default function Tools() {
                     ? <><div className="w-5 h-5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin"/>جاري الاكتشاف...</>
                     : <><span className="text-xl">🔍</span>اكتشف فترات الصمت</>}
                 </button>
+
+                {/* ── خريطة الأركان الذكية ────────────────────────────────── */}
+                {showPrayerMap && prayerSegments.length > 0 && (
+                  <div className="mt-4">
+                    <PrayerMapPanel
+                      segments={prayerSegments}
+                      onToggle={handlePrayerToggle}
+                      onApply={handlePrayerApply}
+                      onSelectAll={handlePrayerSelectAll}
+                      isProcessing={isRemovingSilence}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2488,6 +2593,17 @@ export default function Tools() {
                       currentTime={silencePlayerTime}
                       height={96}
                       editableRanges={hasProcessed || noSilenceFound ? [] : (() => {
+                        if (showPrayerMap && prayerSegments.length > 0) {
+                          return prayerSegments.map(s => ({
+                            id: s.id, startSec: s.startSec, endSec: s.endSec, enabled: s.enabled,
+                            color: s.classification === "quran_likely"
+                              ? "rgba(22,163,74,0.20)"
+                              : (s.classification === "takbeer_candidate" || s.classification === "transition_candidate")
+                                ? "rgba(220,38,38,0.20)"
+                                : "rgba(234,179,8,0.20)",
+                            label: PrayerTransitionAnalyzer.classLabel(s.classification),
+                          }));
+                        }
                         if (smartModeEnabled && decidedSegments.length > 0) {
                           return decidedSegments.map(d => {
                             const overrideEnabled = d.id in smartOverrides
