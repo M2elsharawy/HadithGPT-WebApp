@@ -32,6 +32,8 @@ export interface EditableRange {
   enabled: boolean;
   /** نص اختياري يظهر داخل النطاق */
   label?: string;
+  /** لون مخصص للمنطقة (اختياري) — يُستخدم كـ fill عند enabled */
+  color?: string;
 }
 
 interface WaveformEditorProps {
@@ -403,7 +405,10 @@ export default function WaveformEditor({
       const isEn = r.enabled;
 
       // Fill
-      ctx.fillStyle = isEn ? "rgba(239,68,68,0.20)" : "rgba(148,163,184,0.15)";
+      const fillColor = isEn
+        ? (r.color ?? "rgba(239,68,68,0.20)")
+        : "rgba(148,163,184,0.15)";
+      ctx.fillStyle = fillColor;
       ctx.fillRect(x, 0, w, H);
 
       // Borders

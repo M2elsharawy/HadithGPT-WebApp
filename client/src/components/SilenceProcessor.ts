@@ -74,6 +74,8 @@ export interface SilenceProcessorReport {
   finalDurationSec: number;
   /** قائمة فترات الصمت التي تم إزالتها */
   removedSegments: SilenceSegment[];
+  /** قيم RMS بالـ dB لكل نافذة — تُستخدم من SmartPrayerAnalyzer */
+  rmsFrames?: Float32Array;
   /** بيانات VAD التشخيصية — موجودة فقط عند detectionMode = "vad" */
   vadFrames?: VADFrameData[];
   /** noise floor المكتشف تلقائياً بالـ dB — موجود فقط عند detectionMode = "vad" */
@@ -217,11 +219,7 @@ export class SilenceProcessor {
     if (!response.ok) throw new Error(`فشل تحميل الملف: HTTP ${response.status}`);
     const arrayBuffer = await response.arrayBuffer();
     const ctx = new AudioContext();
-    try {
-      return await ctx.decodeAudioData(arrayBuffer);
-    } finally {
-      await ctx.close();
-    }
+    try { return await ctx.decodeAudioData(arrayBuffer); } finally { await ctx.close(); }
   }
 
   /**
@@ -489,7 +487,7 @@ export class SilenceProcessor {
 
       for (let w = 1; w <= numWindows; w++) {
         const winType: "audio" | "silence" =
-          w < numWindows ? (isSilent[w] === 0 ? "audio" : "silence") : (currentType === "audio" ? "silence" : "audio");
+          w < numWindows ? (isSilent[w] === 0 ? "audio" : "silence") : currentType;
 
         if (winType !== currentType || w === numWindows) {
           segments.push({
@@ -560,14 +558,12 @@ export class SilenceProcessor {
     // ── 8. بناء الـ AudioBuffer الناتج ───────────────────────────────────────
     onProgress?.({ stage: "جاري بناء الملف الناتج...", percent: 65 });
 
-    // نستخدم AudioContext مؤقتاً لإنشاء الـ buffer فقط
     const tempCtx = new AudioContext();
     const outputBuffer = tempCtx.createBuffer(
       numberOfChannels,
       Math.max(1, totalOutputSamples),
       sampleRate
     );
-    await tempCtx.close();
 
     // نسخ البيانات chunk by chunk لجميع القنوات
     const channelWritePos = new Array(numberOfChannels).fill(0);
@@ -602,6 +598,12 @@ export class SilenceProcessor {
 
     onProgress?.({ stage: "اكتملت المعالجة ✓", percent: 100 });
 
+    // تحويل rmsValues إلى dB للاستخدام في SmartPrayerAnalyzer
+    const rmsDbFrames = new Float32Array(numWindows);
+    for (let w = 0; w < numWindows; w++) {
+      rmsDbFrames[w] = rmsValues[w] < 1e-9 ? -100 : 20 * Math.log10(rmsValues[w]);
+    }
+
     const report: SilenceProcessorReport = {
       removedCount: removedSegments.length,
       totalRemovedSec: Math.max(0, totalRemovedSec),
@@ -611,6 +613,7 @@ export class SilenceProcessor {
       vadFrames,
       detectedNoiseFloorDb,
       effectiveThresholdDb,
+      rmsFrames: rmsDbFrames,
     };
 
     return { blob, report };
