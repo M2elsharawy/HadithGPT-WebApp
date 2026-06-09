@@ -41,10 +41,38 @@ import type { EnhancementReport, HumRemovalOptions, NoiseReductionOptions, DeRev
 import WaveformPlayer, { WaveformPlayerHandle, WaveformMarker } from "@/components/WaveformPlayer";
 import WaveformEditor, { EditableRange } from "@/components/WaveformEditor";
 import PrayerMapPanel from "@/components/PrayerMapPanel";
+import { UnifiedPrayerAnalyzer } from '@/components/UnifiedPrayerAnalyzer';
+import type { UnifiedSegment } from '@/components/UnifiedPrayerAnalyzer';
 import { useLocalHistory } from "@/hooks/useLocalHistory";
 import { useAudioWorker } from "@/hooks/useAudioWorker";
 
 const MAX_FILE_SIZE_MB    = 100;
+
+// تحويل UnifiedSegment → الشكل الذي يعرضه PrayerMapPanel (VoicedSegment)
+function unifiedToMapSegment(s: UnifiedSegment) {
+  const classMap: Record<string, string> = {
+    recitation: 'quran_likely',
+    ritual:     'takbeer_candidate',
+    silence:    'transition_candidate',
+    review:     'review',
+  };
+  return {
+    id:             s.id,
+    startSec:       s.startSec,
+    endSec:         s.endSec,
+    durationSec:    s.durationSec,
+    rmsDb:          s.avgRmsDb,
+    peakDb:         s.avgRmsDb,
+    silenceBefore:  0,
+    silenceAfter:   0,
+    positionRatio:  0,
+    classification: (classMap[s.kind] ?? 'review') as import('@/components/PrayerTransitionAnalyzer').TransitionClass,
+    confidence:     s.confidence,
+    safeToRemove:   s.enabled,
+    enabled:        s.enabled,
+    protected:      s.protected,
+  };
+}
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 // ─── Tool IDs ──────────────────────────────────────────────────────────────────
@@ -1700,7 +1728,7 @@ export default function Tools() {
   const handleDetectSilence = async () => {
     if (!currentAudio) { toast.error("لا يوجد ملف"); return; }
 
-    // ── وضع ذكي: تحليل المقاطع الصوتية مباشرةً بدون SilenceProcessor ─────────
+    // ── وضع ذكي: تحليل الطاقة الموحّد بدون SilenceProcessor ─────────────────
     if (silenceMode === "smart") {
       setIsDetectingSilence(true); setSilenceProgress(0); setSilenceStage("تحليل الأركان...");
       setShowPrayerMap(false); setPrayerSegments([]);
@@ -1710,16 +1738,23 @@ export default function Tools() {
         setSilenceAudioBuffer(buf);
         setSilenceProgress(40);
         await new Promise(r => setTimeout(r, 10));
-        const result = PrayerTransitionAnalyzer.analyze(buf, -20);
-        const segs = result.voicedSegments.map(s => ({ ...s, enabled: s.safeToRemove }));
-        setPrayerSegments(segs);
+        const result = UnifiedPrayerAnalyzer.analyze(buf, {
+          silenceThresholdDb: -35,
+          frameMs:            20,
+        });
+        const mapSegs = result.segments.map(unifiedToMapSegment);
+        setPrayerSegments(mapSegs);
         setShowPrayerMap(true);
         setSilenceProgress(100);
-        const nonQuran = segs.filter(s => s.classification !== "quran_likely").length;
-        toast.success(`تم تحليل ${segs.length} مقطع — ${nonQuran} مقطع غير قرآني للمراجعة`);
+        toast.success(
+          `تم تحليل ${result.segments.length} مقطع — ` +
+          `تلاوة: ${Math.round(result.recitationSec)}ث · ` +
+          `قابل للحذف: ${Math.round(result.removableSec)}ث`
+        );
       } catch (err) {
         const e = err instanceof Error ? err : new Error("خطأ");
         toast.error(`فشل التحليل: ${e.message}`);
+        console.error('[UnifiedAnalyzer]', err);
       } finally {
         setIsDetectingSilence(false); setSilenceProgress(0); setSilenceStage("");
       }
