@@ -1732,6 +1732,8 @@ export default function Tools() {
       setIsDetectingSilence(true); setSilenceProgress(0); setSilenceStage("تحليل الأركان...");
       setShowPrayerMap(false); setPrayerSegments([]);
       setSilenceAudioBuffer(null); setProcessedSilenceResult(null); setNoSilenceFound(false);
+      setDetectedSegments([]); setShowTransitionPanel(false);
+      setDecidedSegments([]); setDecisionSummary(null); setSmartOverrides({});
       try {
         const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
         setSilenceAudioBuffer(buf);
