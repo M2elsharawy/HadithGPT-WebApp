@@ -26,11 +26,6 @@ import { SilenceProcessor, SilenceProcessorReport, DEFAULT_SILENCE_OPTIONS } fro
 import { PrayerTransitionAnalyzer, type VoicedSegment, type TransitionClass } from "@/components/PrayerTransitionAnalyzer";
 import { useAppSettings } from "@/pages/Settings";
 import { AudioTrimmerEngine } from "@/components/AudioTrimmerEngine";
-import { SmartPrayerAnalyzer, type AnalyzerOptions } from "@/components/SmartPrayerAnalyzer";
-import {
-  SmartPrayerDecisionEngine,
-  type DecidedSegment, type GlobalDecisionSummary, type DecisionEngineOptions,
-} from "@/components/SmartPrayerDecisionEngine";
 import {
   AudioExporter, ExportFormat, Mp3Bitrate,
   estimateMp3SizeMB, formatFileSizeMB,
@@ -66,7 +61,7 @@ function unifiedToMapSegment(s: UnifiedSegment) {
     silenceBefore:  0,
     silenceAfter:   0,
     positionRatio:  0,
-    classification: (classMap[s.kind] ?? 'review') as import('@/components/PrayerTransitionAnalyzer').TransitionClass,
+    classification: (classMap[s.kind] ?? 'review') as TransitionClass,
     confidence:     s.confidence,
     safeToRemove:   s.enabled,
     enabled:        s.enabled,
@@ -208,135 +203,6 @@ function EffectExportPanel({
   );
 }
 
-// ─── TransitionPanel — standalone component ──────────────────────────────────
-function TransitionPanel({
-  segments, filter, onFilterChange, onToggle, onSelectSafe,
-  onDeselectAll, onDelete, onClose, onPreview, previewingId,
-}: {
-  segments: VoicedSegment[];
-  filter: TransitionClass | "all";
-  onFilterChange: (f: TransitionClass | "all") => void;
-  onToggle: (id: string) => void;
-  onSelectSafe: () => void;
-  onDeselectAll: () => void;
-  onDelete: () => void;
-  onClose: () => void;
-  onPreview: (seg: VoicedSegment) => void;
-  previewingId: string | null;
-}) {
-  const filtered = filter === "all"
-    ? segments.filter(s => s.classification !== "quran_likely")
-    : segments.filter(s => s.classification === filter);
-  const counts = {
-    takbeer:    segments.filter(s => s.classification === "takbeer_candidate").length,
-    transition: segments.filter(s => s.classification === "transition_candidate").length,
-    iqama:      segments.filter(s => s.classification === "iqama_or_intro").length,
-    salam:      segments.filter(s => s.classification === "salam_or_outro").length,
-    review:     segments.filter(s => s.classification === "review").length,
-  };
-  const enabledCount = segments.filter(s => s.enabled).length;
-
-  return (
-    <div className="border border-amber-200 dark:border-amber-800 rounded-2xl overflow-hidden mt-3">
-      {/* Header */}
-      <div className="px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-100 dark:border-amber-900">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-bold text-amber-800 dark:text-amber-200">🕌 تحليل مقاطع الصلاة</p>
-          <button onClick={onClose} className="text-amber-400 hover:text-amber-600 text-xl leading-none">×</button>
-        </div>
-        <div className="flex flex-wrap gap-1.5 mt-2">
-          {counts.takbeer > 0 && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 font-medium">{counts.takbeer} تكبير محتمل</span>}
-          {counts.iqama   > 0 && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium">{counts.iqama} إقامة/افتتاح</span>}
-          {counts.salam   > 0 && <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900 text-violet-700 dark:text-violet-300 font-medium">{counts.salam} تسليم/خاتمة</span>}
-          {counts.transition > 0 && <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-medium">{counts.transition} انتقال محتمل</span>}
-          {counts.review  > 0 && <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-medium">{counts.review} يحتاج مراجعة</span>}
-        </div>
-      </div>
-
-      {/* Filter tabs */}
-      <div className="flex gap-0.5 p-1.5 bg-amber-50/50 dark:bg-amber-950/10 border-b border-amber-100 dark:border-amber-900 overflow-x-auto">
-        {(["all","takbeer_candidate","iqama_or_intro","salam_or_outro","transition_candidate","review"] as const).map(val => (
-          <button key={val} onClick={() => onFilterChange(val)}
-            className={`flex-shrink-0 px-2.5 py-1 text-xs rounded-lg font-medium transition-all ${
-              filter === val
-                ? "bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-300 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            }`}>
-            {val==="all"?"الكل":val==="takbeer_candidate"?"تكبير":val==="iqama_or_intro"?"إقامة":val==="salam_or_outro"?"تسليم":val==="transition_candidate"?"انتقال":"مراجعة"}
-          </button>
-        ))}
-      </div>
-
-      {/* Warning */}
-      <div className="mx-3 my-2 px-3 py-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-700 dark:text-red-300">
-        ⚠ <strong>تحذير:</strong> تحقق قبل الحذف. المقاطع المعلّمة بـ ★ مقترح حذفها فقط.
-      </div>
-
-      {/* List */}
-      <div className="px-3 pb-2 max-h-60 overflow-y-auto space-y-1.5">
-        {filtered.length === 0 && <p className="text-center text-xs text-slate-400 py-4">لا توجد مقاطع في هذا التصنيف</p>}
-        {filtered.map(seg => {
-          const color = PrayerTransitionAnalyzer.classColor(seg.classification);
-          const label = PrayerTransitionAnalyzer.classLabel(seg.classification);
-          return (
-            <div key={seg.id} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs transition-all ${
-              seg.enabled
-                ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800"
-                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-            }`}>
-              <button onClick={() => onToggle(seg.id)}
-                className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
-                  seg.enabled ? "bg-red-500 border-red-500" : "bg-white dark:bg-slate-900 border-slate-300"
-                }`}>
-                {seg.enabled && <span className="text-white font-bold" style={{fontSize:"10px"}}>✓</span>}
-              </button>
-              <span className="flex-shrink-0 text-xs px-1.5 py-0.5 rounded-full font-semibold"
-                style={{background:color+"25",color}}>
-                {label}{seg.safeToRemove?" ★":""}
-              </span>
-              <span className="font-mono text-slate-600 dark:text-slate-400 flex-1">
-                {PrayerTransitionAnalyzer.fmt(seg.startSec)}
-                <span className="text-slate-300 mx-1">←</span>
-                {PrayerTransitionAnalyzer.fmt(seg.endSec)}
-              </span>
-              <span className="font-mono text-slate-400 flex-shrink-0">{seg.durationSec.toFixed(1)}ث</span>
-              <button onClick={() => onPreview(seg)}
-                className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-xs transition-all ${
-                  previewingId === seg.id
-                    ? "bg-emerald-600 text-white"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-emerald-100 hover:text-emerald-600"
-                }`}>
-                {previewingId === seg.id ? "⏹" : "▶"}
-              </button>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Actions */}
-      <div className="px-3 pb-3 space-y-2 border-t border-amber-100 dark:border-amber-900 pt-3">
-        <div className="flex gap-1.5 text-xs">
-          <button onClick={onSelectSafe}
-            className="px-2.5 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 hover:bg-amber-200">
-            تحديد المقترح ★
-          </button>
-          <button onClick={onDeselectAll}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200">
-            إلغاء الكل
-          </button>
-        </div>
-        <button onClick={onDelete} disabled={enabledCount === 0}
-          className={`w-full h-11 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-            enabledCount === 0
-              ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
-              : "bg-red-600 hover:bg-red-500 text-white shadow-sm"
-          }`}>
-          {enabledCount > 0 ? <>✂ حذف المحدد ({enabledCount} مقطع)</> : "حدّد مقاطع للحذف أولاً"}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export default function Tools() {
   useAuth();
@@ -440,9 +306,7 @@ export default function Tools() {
     appSettings.silenceGap ?? DEFAULT_SILENCE_OPTIONS.replacementGap);
   /** وضع الكشف: "rms" = قياسي (default) | "vad" = متقدم */
   const [silenceDetectionMode, setSilenceDetectionMode] = useState<"rms" | "vad">("rms");
-  const [silenceMode, setSilenceMode] = useState<"default" | "smart">("default");
-  /** حذف كل المحدد بدون قيود maxRemovableRatio */
-  const [forceDeleteAll, setForceDeleteAll]             = useState(false);
+  const [silenceMode, setSilenceMode] = useState<"default" | "smart" | "prayer">("default");
 
   // ── Silence workspace extras ───────────────────────────────────────────────
   const SILENCE_THEMES = [
@@ -527,14 +391,9 @@ export default function Tools() {
   const [showSilenceSegmentList, setShowSilenceSegmentList] = useState(false);
   const [noSilenceFound, setNoSilenceFound] = useState(false);
 
-  // ── PrayerTransitionAnalyzer state ──────────────────────────────────────────
-  const [transitionSegments, setTransitionSegments]       = useState<VoicedSegment[]>([]);
-  const [showTransitionPanel, setShowTransitionPanel]     = useState(false);
   // ── PrayerMapPanel state (وضع ذكي — مراجعة قبل الحذف) ──────────────────────
   const [prayerSegments, setPrayerSegments]               = useState<VoicedSegment[]>([]);
   const [showPrayerMap, setShowPrayerMap]                 = useState(false);
-  const [isAnalyzingTransitions, setIsAnalyzingTransitions] = useState(false);
-  const [transitionFilter, setTransitionFilter]           = useState<TransitionClass | "all">("all");
   // refs للـ result preview — لا useState حتى يكون الـ cleanup فورياً
   const silenceResultPreviewCtx = useRef<AudioContext | null>(null);
   const silenceResultPreviewSrc = useRef<AudioBufferSourceNode | null>(null);
@@ -607,12 +466,6 @@ export default function Tools() {
     removedRatio: number;
     removedCount: number;
   } | null>(null);
-  const [smartModeEnabled, setSmartModeEnabled] = useState(false);
-  /** النتائج المُثرَّاة من SmartPrayerDecisionEngine */
-  const [decidedSegments, setDecidedSegments]   = useState<DecidedSegment[]>([]);
-  const [decisionSummary, setDecisionSummary]   = useState<GlobalDecisionSummary | null>(null);
-  /** يسمح للمستخدم بتجاوز قرار الـ engine لكل جزء */
-  const [smartOverrides, setSmartOverrides]     = useState<Record<string, boolean>>({});
   const [isAnalyzing, setIsAnalyzing]           = useState(false);
   // ── وضع الصلاة — الإعدادات المثلى لتسجيلات الصلاة ────────────────────────
   // PRAYER_PRESET — القيم المُختبَرة للصلاة (ثابتة كمرجع)
@@ -634,41 +487,6 @@ export default function Tools() {
       silenceMode:         "prayer",
     });
     toast.success("✓ وضع الصلاة — حذف الصمت الطويل");
-  };
-
-  // ── Smart analysis — يُشغَّل بعد الكشف إذا كان Smart Mode مفعَّلاً ─────────
-  const runSmartAnalysis = (
-    rawSegs: Array<{ id: string; startSec: number; endSec: number; durationSec: number; enabled: boolean }>,
-    totalAudioSec: number
-  ) => {
-    if (rawSegs.length === 0) { setDecidedSegments([]); setDecisionSummary(null); return; }
-    setIsAnalyzing(true);
-
-    // rmsFrames وهمية إذا لم يُعِدها SilenceProcessor بعد —
-    // SmartPrayerAnalyzer يتعامل معها بأمان (تُعيد thresholdDb - 30 للـ avgDb)
-    const fakeRms: number[] = [];
-
-    const analyzerOpts: AnalyzerOptions = {
-      thresholdDb:  silenceThresholdDb,
-      sampleRate:   44100,
-      windowSize:   2048,
-    };
-    const enriched = SmartPrayerAnalyzer.analyze(rawSegs, fakeRms, analyzerOpts);
-
-    const engineOpts: DecisionEngineOptions = {
-      minKeepDuration:     1.5,
-      preTailSec:          0.3,
-      postTailSec:         0.4,
-      maxRemovableRatio:   0.40,
-    };
-    const { segments: decided, summary } = SmartPrayerDecisionEngine.decide(
-      enriched, totalAudioSec, engineOpts
-    );
-
-    setDecidedSegments(decided);
-    setDecisionSummary(summary);
-    setSmartOverrides({});
-    setIsAnalyzing(false);
   };
 
   // ── Smart Auto Clean ──────────────────────────────────────────────────────
@@ -706,35 +524,30 @@ export default function Tools() {
         toast.success("لا صمت كافٍ للحذف"); setIsAutoClean(false); return;
       }
 
-      // 2. SmartPrayerAnalyzer
-      setAutoCleanStage("جاري تصنيف المقاطع..."); setAutoCleanProgress(42);
-      const enriched = SmartPrayerAnalyzer.analyze(rawSegs, [], {
-        thresholdDb: -50, sampleRate: 44100, windowSize: 2048,
-      });
-
-      // 3. SmartPrayerDecisionEngine
+      // 2. حساب النطاقات بناءً على الـ preset
       setAutoCleanStage("جاري اتخاذ القرارات..."); setAutoCleanProgress(56);
       const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
-      const { segments: decided, summary } = SmartPrayerDecisionEngine.decide(
-        enriched, buf.duration,
-        { shortPauseRemoveThreshold: preset.shortPauseRemoveThreshold,
-          longPauseRemoveThreshold:  preset.removeThreshold,
-          maxRemovableRatio:         preset.maxRemovableRatio,
-          minKeepDuration: 1.5, preTailSec: 0.3, postTailSec: 0.4 }
-      );
+      const maxRemovable = buf.duration * preset.maxRemovableRatio;
+      let accumulated = 0;
+      const ranges = rawSegs
+        .filter(s => {
+          if (accumulated >= maxRemovable) return false;
+          accumulated += s.durationSec;
+          return true;
+        })
+        .map(s => ({ start: s.startSec, end: s.endSec }));
 
-      const ranges = SmartPrayerDecisionEngine.toDeleteRanges(decided);
       if (ranges.length === 0) {
-        toast.success("الذكاء الاصطناعي قرر الإبقاء على الملف كما هو");
+        toast.success("لا يوجد صمت يستحق الحذف");
         setIsAutoClean(false); return;
       }
 
-      // 4. Apply deleteMultipleRanges
+      // 3. Apply deleteMultipleRanges
       setAutoCleanStage("جاري تطبيق التنظيف..."); setAutoCleanProgress(72);
       const outBuffer = await AudioTrimmerEngine.deleteMultipleRanges(buf, ranges, 0.25, 0.02);
       setAutoCleanProgress(90);
 
-      // 5. setActiveAudio → Undo تلقائي
+      // 4. setActiveAudio → Undo تلقائي
       const wavBlob = AudioTrimmerEngine.toWav(outBuffer);
       const newUrl  = URL.createObjectURL(wavBlob);
       const newName = currentAudio.name.replace(/\.[^.]+$/, "") + "-cleaned.wav";
@@ -743,8 +556,8 @@ export default function Tools() {
       setAutoCleanResult({
         originalDuration: buf.duration,
         finalDuration:    outBuffer.duration,
-        removedRatio:     summary.estimatedRemovedRatio,
-        removedCount:     summary.removeCount + summary.partialTrimCount,
+        removedRatio:     (buf.duration - outBuffer.duration) / buf.duration,
+        removedCount:     ranges.length,
       });
       setAutoCleanProgress(100);
       toast.success(`✓ اكتمل التنظيف الذكي`);
@@ -839,7 +652,7 @@ export default function Tools() {
     silenceResultPreviewCtx.current = null;
     setPreviewingSegId(null); setIsPreviewing(false); setSilenceExportStatus("idle"); setSilenceShowExport(false);
     // مسح الـ silence state
-    setSilenceAudioBuffer(null); setDetectedSegments([]); setSilenceReport(null); setSilenceResultBuffer(null); setProcessedSilenceResult(null); setNoSilenceFound(false); setDecidedSegments([]); setDecisionSummary(null); setSmartOverrides({});
+    setSilenceAudioBuffer(null); setDetectedSegments([]); setSilenceReport(null); setSilenceResultBuffer(null); setProcessedSilenceResult(null); setNoSilenceFound(false);
 
     if (processedBlobUrl && processedBlobUrl === oldUrl) {
       setProcessedBlobUrl(null);
@@ -1005,11 +818,9 @@ export default function Tools() {
       setSilenceReport(null);
       setSilenceAudioBuffer(null);
       setDetectedSegments([]);
-      setDecidedSegments([]);
       setSilenceResultBuffer(null);
       setProcessedSilenceResult(null);
       setNoSilenceFound(false);
-      setForceDeleteAll(false);
       setDeleteConfirm(null);
       setActiveEffects(new Set());
       setActiveTool(null);
@@ -1058,7 +869,7 @@ export default function Tools() {
     setCurrentAudio({ ...currentAudio, url: originalAudioUrl, name: originalName });
     setProcessedBlobUrl(null); setProcessedFileName("");
     // مسح الـ silence state — الموجة القديمة لا تنطبق على الملف الأصلي
-    setSilenceAudioBuffer(null); setDetectedSegments([]); setSilenceReport(null); setSilenceResultBuffer(null); setProcessedSilenceResult(null); setNoSilenceFound(false); setDecidedSegments([]); setDecisionSummary(null); setSmartOverrides({});
+    setSilenceAudioBuffer(null); setDetectedSegments([]); setSilenceReport(null); setSilenceResultBuffer(null); setProcessedSilenceResult(null); setNoSilenceFound(false);
     toast.success("تمت استعادة الملف الأصلي");
   };
 
@@ -1732,8 +1543,7 @@ export default function Tools() {
       setIsDetectingSilence(true); setSilenceProgress(0); setSilenceStage("تحليل الأركان...");
       setShowPrayerMap(false); setPrayerSegments([]);
       setSilenceAudioBuffer(null); setProcessedSilenceResult(null); setNoSilenceFound(false);
-      setDetectedSegments([]); setShowTransitionPanel(false);
-      setDecidedSegments([]); setDecisionSummary(null); setSmartOverrides({});
+      setDetectedSegments([]);
       try {
         const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
         setSilenceAudioBuffer(buf);
@@ -1762,8 +1572,73 @@ export default function Tools() {
       return;
     }
 
+    // ── وضع صلاة: حذف تلقائي بلا مراجعة ──────────────────────────────────────
+    if (silenceMode === "prayer") {
+      setIsDetectingSilence(true); setSilenceProgress(0); setSilenceStage("تحليل الصلاة...");
+      setSilenceAudioBuffer(null); setProcessedSilenceResult(null); setNoSilenceFound(false);
+      setDetectedSegments([]);
+      try {
+        const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
+        setSilenceAudioBuffer(buf);
+        setSilenceProgress(30);
+        await new Promise(r => setTimeout(r, 10));
+        const result = UnifiedPrayerAnalyzer.analyze(buf, {
+          silenceThresholdDb: -35,
+          frameMs: 20,
+        });
+        setSilenceProgress(60);
+        const toDelete = result.segments
+          .filter(s => s.enabled)
+          .map(s => ({ start: s.startSec, end: s.endSec }))
+          .sort((a, b) => a.start - b.start);
+        if (toDelete.length === 0) {
+          toast.success("لم يُعثر على أركان أو صمت للحذف");
+          setNoSilenceFound(true);
+          return;
+        }
+        const normalized = normalizeDeleteRanges(toDelete, buf.duration);
+        const outBuffer = await AudioTrimmerEngine.deleteMultipleRanges(buf, normalized, 0, 0.02);
+        if (!outBuffer || outBuffer.duration < 1) {
+          toast.error("الناتج غير صالح"); return;
+        }
+        setSilenceProgress(90);
+        const outWav = AudioTrimmerEngine.toWav(outBuffer);
+        const newUrl = URL.createObjectURL(outWav);
+        const newName = SilenceProcessor.buildFileName(currentAudio.name);
+        const dot  = newName.lastIndexOf(".");
+        const base = dot !== -1 ? newName.slice(0, dot) : newName;
+        setSilenceExportName(`${base}.wav`);
+        setSilenceResultBuffer(outBuffer);
+        setSilenceResultName(newName);
+        setActiveAudio(newUrl, newName);
+        setSilenceAudioBuffer(outBuffer);
+        setProcessedSilenceResult({
+          buffer:           outBuffer,
+          url:              newUrl,
+          name:             newName,
+          originalDuration: buf.duration,
+          newDuration:      outBuffer.duration,
+          removedDuration:  buf.duration - outBuffer.duration,
+          removedCount:     normalized.length,
+        });
+        setSilenceProgress(100);
+        addSilenceChip(`✂ ${normalized.length} مقطع`);
+        toast.success(
+          `✓ حُذف ${normalized.length} مقطع تلقائياً — ` +
+          `المدة الجديدة: ${SilenceProcessor.formatDuration(outBuffer.duration)}`
+        );
+      } catch (err) {
+        const e = err instanceof Error ? err : new Error("خطأ");
+        toast.error(`فشلت المعالجة: ${e.message}`);
+        console.error('[PrayerAutoDelete]', err);
+      } finally {
+        setIsDetectingSilence(false); setSilenceProgress(0); setSilenceStage("");
+      }
+      return;
+    }
+
     setIsDetectingSilence(true); setSilenceProgress(0); setSilenceStage("");
-    setSilenceReport(null); setDetectedSegments([]); setSilenceAudioBuffer(null); setSilenceResultBuffer(null); setProcessedSilenceResult(null); setNoSilenceFound(false); setDecidedSegments([]); setDecisionSummary(null); setSmartOverrides({}); setShowSilenceSegmentList(false);
+    setSilenceReport(null); setDetectedSegments([]); setSilenceAudioBuffer(null); setSilenceResultBuffer(null); setProcessedSilenceResult(null); setNoSilenceFound(false); setShowSilenceSegmentList(false);
     try {
       // حمّل الـ buffer للـ waveform
       const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
@@ -1808,10 +1683,6 @@ export default function Tools() {
         toast.success(`تم اكتشاف ${segs.length} فترة صمت — راجعها على الموجة`);
       }
       setProcessedSilenceResult(null); // مسح أي نتيجة سابقة
-      // إذا Smart Mode مفعَّل → شغّل التحليل الذكي فوراً
-      if (smartModeEnabled && segs.length > 0) {
-        runSmartAnalysis(segs, buf.duration);
-      }
     } catch (err) {
       const e = err instanceof Error ? err : new Error("خطأ");
       toast.error(e.message.includes("HTTP") ? "فشل تحميل الملف" : `فشل الكشف: ${e.message}`);
@@ -1824,52 +1695,6 @@ export default function Tools() {
 
     setIsRemovingSilence(true); setSilenceProgress(0);
     try {
-      // ── وضع ذكي — pipeline كامل بضغطة واحدة ────────────────────────────
-      if (silenceMode === "smart") {
-        const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
-        const { processPrayerMode } = await import('@/components/PrayerModeProcessor');
-        const result = await processPrayerMode(
-          currentAudio.url,
-          buf,
-          (pct, stage) => { setSilenceProgress(pct); setSilenceStage(stage); },
-        );
-
-        if (result.removedCount === 0) {
-          toast.success("لم يُعثر على مقاطع قابلة للحذف في هذا الملف");
-          return;
-        }
-
-        const outBuffer = result.buffer;
-        setSilenceProgress(85);
-        setSilenceResultBuffer(outBuffer);
-        const newName = SilenceProcessor.buildFileName(currentAudio?.name ?? "audio");
-        setSilenceResultName(newName);
-        const dot  = newName.lastIndexOf(".");
-        const base = dot !== -1 ? newName.slice(0, dot) : newName;
-        setSilenceExportName(`${base}.wav`);
-        const outWav = AudioTrimmerEngine.toWav(outBuffer);
-        const newUrl = URL.createObjectURL(outWav);
-        setActiveAudio(newUrl, newName);
-        setSilenceAudioBuffer(outBuffer);
-        setProcessedSilenceResult({
-          buffer:           outBuffer,
-          url:              newUrl,
-          name:             newName,
-          originalDuration: result.originalSec,
-          newDuration:      result.finalSec,
-          removedDuration:  result.removedSec,
-          removedCount:     result.removedCount,
-        });
-        setDetectedSegments([]); setSilenceReport(null);
-        setSilenceProgress(100);
-        addSilenceChip(`✂ ${result.removedCount} مقطع`);
-        toast.success(
-          `✓ حُذف ${result.removedCount} مقطع (${SilenceProcessor.formatDuration(result.removedSec)}) — ` +
-          `المدة الجديدة: ${SilenceProcessor.formatDuration(result.finalSec)}`
-        );
-        return;
-      }
-
       // ── الوضع العادي ─────────────────────────────────────────────────────
       const enabledSegs = detectedSegments.filter(s => s.enabled);
       if (enabledSegs.length === 0) { toast.error("لا توجد نطاقات مُفعَّلة للحذف"); return; }
@@ -1878,32 +1703,10 @@ export default function Tools() {
       setSilenceProgress(40);
 
       // ── بناء الـ ranges ───────────────────────────────────────────────
-      let rawRanges: Array<{ start: number; end: number }>;
-
-      if (forceDeleteAll) {
-        // Force mode: احذف كل enabled segments بدون قيود
-        rawRanges = enabledSegs.map(s => ({ start: s.startSec, end: s.endSec }));
-      } else if (smartModeEnabled && decidedSegments.length > 0) {
-        // Smart mode: استخدم trim boundaries من DecisionEngine
-        // مزامنة enabled من checkboxes
-        const withOverrides = decidedSegments.map(d => {
-          let enabled: boolean;
-          if (d.id in smartOverrides) {
-            enabled = smartOverrides[d.id];
-          } else {
-            const rawSeg = detectedSegments.find(s => s.id === d.id);
-            enabled = rawSeg
-              ? rawSeg.enabled
-              : (d.decision === "remove" || d.decision === "partial_trim");
-          }
-          return { ...d, enabled };
-        });
-        rawRanges = SmartPrayerDecisionEngine.toDeleteRanges(withOverrides);
-      } else {
-        // Normal mode: استخدم detectedSegments مباشرةً — بلا preTail/postTail
-        // هذا يطابق ما يُرسم أحمر على الـ waveform
-        rawRanges = enabledSegs.map(s => ({ start: s.startSec, end: s.endSec }));
-      }
+      // استخدم detectedSegments مباشرةً — بلا preTail/postTail
+      // هذا يطابق ما يُرسم أحمر على الـ waveform
+      const rawRanges: Array<{ start: number; end: number }> =
+        enabledSegs.map(s => ({ start: s.startSec, end: s.endSec }));
 
       // ── normalizeDeleteRanges: فرز + دمج + تنظيف ──────────────────────
       const audioDuration = buf.duration;
@@ -1956,9 +1759,7 @@ export default function Tools() {
   ) => {
     setIsRemovingSilence(true); setSilenceProgress(50);
     try {
-      // في Force mode نستخدم gapSec=0 لأن المستخدم حدد النطاقات بنفسه
-      // silenceReplacementGap كبير (0.25s × عشرات النطاقات) يُضيف دقائق زائدة
-      const gap = forceDeleteAll ? 0 : silenceReplacementGap;
+      const gap = silenceReplacementGap;
 
       // حساب دقيق للـ keep ranges قبل الاستدعاء
       const totalDur     = buf.duration;
@@ -2024,60 +1825,6 @@ export default function Tools() {
     silencePreviewCtx.current?.close().catch(() => {});
     silencePreviewCtx.current = null;
     setPreviewingSegId(null);
-  };
-
-  // ── PrayerTransitionAnalyzer — تحليل المقاطع الصوتية القصيرة ───────────────
-  const handleAnalyzeTransitions = async () => {
-    const srcBuf = processedSilenceResult?.buffer ?? silenceAudioBuffer;
-    if (!srcBuf) { toast.error("لا يوجد ملف للتحليل"); return; }
-    setIsAnalyzingTransitions(true);
-    setShowTransitionPanel(false);
-    try {
-      // التحليل يعمل في نفس الـ thread — قد يأخذ 1-3 ثوانٍ
-      await new Promise(r => setTimeout(r, 10)); // أعطِ الـ UI وقتاً للتحديث
-      const result = PrayerTransitionAnalyzer.analyze(srcBuf, silenceThresholdDb);
-      setTransitionSegments(result.voicedSegments);
-      setShowTransitionPanel(true);
-      const nonQuran = result.takbeerCount + result.transitionCount + result.iqamaCount + result.salamCount + result.reviewCount;
-      if (nonQuran === 0) {
-        toast.success("لم يُعثر على تكبيرات أو انتقالات — الملف يبدو تلاوة قرآنية فقط");
-      } else {
-        toast.success(`تم اكتشاف ${nonQuran} مقطع غير قرآني للمراجعة`);
-      }
-    } catch (e) {
-      console.error("[TransitionAnalyzer]", e);
-      toast.error("فشل تحليل الانتقالات");
-    } finally {
-      setIsAnalyzingTransitions(false);
-    }
-  };
-
-  // حذف المقاطع المُحددة في TransitionPanel
-  // حذف المقاطع المُحددة في TransitionPanel
-  const handleDeleteTransitions = async () => {
-    const srcBuf = processedSilenceResult?.buffer ?? silenceAudioBuffer;
-    if (!srcBuf) { toast.error("لا يوجد ملف"); return; }
-    const toDelete = transitionSegments.filter(s => s.enabled);
-    if (toDelete.length === 0) { toast.error("لم تُحدّد أي مقطع للحذف"); return; }
-    const sorted = [...toDelete].sort((a, b) => b.startSec - a.startSec);
-    let outBuf = srcBuf;
-    for (const seg of sorted) {
-      outBuf = await AudioTrimmerEngine.deleteRange(outBuf, seg.startSec, seg.endSec, 0.05, 0.02);
-    }
-    const wav  = AudioTrimmerEngine.toWav(outBuf);
-    const url  = URL.createObjectURL(wav);
-    const name = AudioTrimmerEngine.buildCutFileName(currentAudio?.name ?? "audio");
-    setActiveAudio(url, name);
-    setSilenceAudioBuffer(outBuf);
-    setProcessedSilenceResult(prev => prev
-      ? { ...prev, buffer: outBuf, url, name, newDuration: outBuf.duration }
-      : { buffer: outBuf, url, name, originalDuration: srcBuf.duration,
-          newDuration: outBuf.duration, removedDuration: srcBuf.duration - outBuf.duration,
-          removedCount: toDelete.length }
-    );
-    setTransitionSegments([]);
-    setShowTransitionPanel(false);
-    toast.success(`✓ تم حذف ${toDelete.length} مقطع`);
   };
 
   // ── PrayerMapPanel handlers ───────────────────────────────────────────────
@@ -2385,17 +2132,17 @@ export default function Tools() {
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">اختر الوضع المناسب</p>
                 <div className="grid grid-cols-3 gap-3">
 
-                  {/* وضع الصلاة */}
-                  <button onClick={() => { applyPrayerPreset(); setSilenceMode("default"); }}
+                  {/* وضع الصلاة — حذف تلقائي بلا مراجعة */}
+                  <button onClick={() => { setSilenceMode("prayer"); toast.success("✓ وضع الصلاة — حذف تلقائي بلا مراجعة"); }}
                     className={`flex flex-col gap-2 p-4 rounded-2xl border-2 text-right transition-all hover:scale-[1.02] ${
-                      silenceThresholdDb===-10&&silenceMinDuration===1.4&&silenceReplacementGap===5
+                      silenceMode === "prayer"
                         ? "border-violet-500 bg-violet-50 dark:bg-violet-950/60"
                         : "border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-700 bg-white dark:bg-slate-900"
                     }`}>
                     <span className="text-2xl">🕌</span>
                     <div>
                       <p className="text-sm font-bold text-slate-800 dark:text-slate-200">صلاة</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">يحذف الفترات الطويلة بين الركعات</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">يحذف الأركان تلقائياً بدون مراجعة</p>
                     </div>
                   </button>
 
@@ -2421,7 +2168,6 @@ export default function Tools() {
                     setSilenceThresholdDb(-20); setSilenceMinDuration(0.5);
                     setSilenceReplacementGap(0.25); setSilenceDetectionMode("vad");
                     setSilenceMode("default");
-                    if (!smartModeEnabled) setSmartModeEnabled(true);
                     toast.success("✓ وضع الاكتشاف الدقيق");
                   }}
                     className={`flex flex-col gap-2 p-4 rounded-2xl border-2 text-right transition-all hover:scale-[1.02] ${
@@ -2436,32 +2182,6 @@ export default function Tools() {
                     </div>
                   </button>
                 </div>
-
-                {/* Smart Mode toggle — compact */}
-                <button onClick={() => {
-                  const next = !smartModeEnabled;
-                  setSmartModeEnabled(next);
-                  if (next && detectedSegments.length > 0 && silenceAudioBuffer)
-                    runSmartAnalysis(detectedSegments, silenceAudioBuffer.duration);
-                  else if (!next) { setDecidedSegments([]); setDecisionSummary(null); setSmartOverrides({}); }
-                }}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                    smartModeEnabled
-                      ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700"
-                      : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300"
-                  }`}>
-                  <div className="text-right">
-                    <p className={`text-xs font-semibold ${smartModeEnabled?"text-emerald-800 dark:text-emerald-200":"text-slate-700 dark:text-slate-300"}`}>
-                      🧠 التحليل الذكي
-                    </p>
-                    <p className={`text-xs ${smartModeEnabled?"text-emerald-500":"text-slate-400"}`}>
-                      {smartModeEnabled?"يُصنّف الأجزاء تلقائياً":"تحكم يدوي"}
-                    </p>
-                  </div>
-                  <div className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${smartModeEnabled?"bg-emerald-500":"bg-slate-300 dark:bg-slate-600"}`}>
-                    <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${smartModeEnabled?"translate-x-5":"translate-x-0.5"}`}/>
-                  </div>
-                </button>
 
                 {/* ── Advanced settings — accordion ──────────────────────── */}
                 <button onClick={() => setShowAdvancedSilence(v => !v)}
@@ -2626,11 +2346,6 @@ export default function Tools() {
                           <span>هذا الحذف سيُزيل {(deletionRatio*100).toFixed(0)}% من الملف — راجع النطاقات بعناية</span>
                         </div>
                       )}
-                      {(decisionSummary?.reviewCount ?? 0) > 0 && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
-                          · {decisionSummary!.reviewCount} فترة تحتاج مراجعة — لن تُحذف تلقائياً
-                        </p>
-                      )}
                       <p className="text-xs text-slate-400 mt-1.5">
                         المناطق الحمراء ستُحذف · انقر على أي منطقة لتعطيلها
                       </p>
@@ -2658,20 +2373,6 @@ export default function Tools() {
                                 : "rgba(234,179,8,0.20)",
                             label: PrayerTransitionAnalyzer.classLabel(s.classification),
                           }));
-                        }
-                        if (smartModeEnabled && decidedSegments.length > 0) {
-                          return decidedSegments.map(d => {
-                            const overrideEnabled = d.id in smartOverrides
-                              ? smartOverrides[d.id]
-                              : (d.decision==="remove"||d.decision==="partial_trim");
-                            const startSec = d.trim?.startSec ?? d.startSec;
-                            const endSec   = d.trim?.endSec   ?? d.endSec;
-                            return { id:d.id, startSec, endSec, enabled:overrideEnabled,
-                              label: d.decision==="remove" ? `آمن للحذف · ${SilenceProcessor.formatDuration(d.durationSec)}`
-                                   : d.decision==="partial_trim" ? `حذف جزئي · ${SilenceProcessor.formatDuration(d.trim?.removedSec??0)}`
-                                   : d.decision==="review" ? `يحتاج مراجعة · ${SilenceProcessor.formatDuration(d.durationSec)}`
-                                   : `سيتم الاحتفاظ به · ${SilenceProcessor.formatDuration(d.durationSec)}` };
-                          });
                         }
                         return detectedSegments.map(s => ({
                           id:s.id, startSec:s.startSec, endSec:s.endSec, enabled:s.enabled,
@@ -2748,55 +2449,10 @@ export default function Tools() {
                         <span className="text-2xl">💾</span>حفظ النهائي
                       </button>
                     </div>
-                    <button onClick={() => { setProcessedSilenceResult(null); setSilenceResultBuffer(null); setTransitionSegments([]); setShowTransitionPanel(false); }}
+                    <button onClick={() => { setProcessedSilenceResult(null); setSilenceResultBuffer(null); }}
                       className="w-full text-xs text-slate-400 hover:text-slate-600 py-1 transition-colors">
                       اكتشف مجدداً ←
                     </button>
-
-                    {/* ── زر تحليل الانتقالات ─────────────────────────── */}
-                    <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
-                      <button
-                        onClick={handleAnalyzeTransitions}
-                        disabled={isAnalyzingTransitions}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all disabled:opacity-50">
-                        {isAnalyzingTransitions
-                          ? <><div className="w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"/>يحلل التكبيرات والانتقالات...</>
-                          : <>🕌 مراجعة التكبيرات والانتقالات</>}
-                      </button>
-                      <p className="text-xs text-center text-slate-400 mt-1.5">
-                        يكتشف التكبيرات والإقامة والتسليم المحتملة
-                      </p>
-                    </div>
-
-                    {/* ── Transition Analysis Panel ──────────────────────── */}
-                    {showTransitionPanel && transitionSegments.length > 0 && (
-                      <TransitionPanel
-                        segments={transitionSegments}
-                        filter={transitionFilter}
-                        onFilterChange={setTransitionFilter}
-                        onToggle={id => setTransitionSegments(prev => prev.map(s => s.id===id?{...s,enabled:!s.enabled}:s))}
-                        onSelectSafe={() => setTransitionSegments(prev => prev.map(s => ({...s,enabled:s.safeToRemove})))}
-                        onDeselectAll={() => setTransitionSegments(prev => prev.map(s => ({...s,enabled:false})))}
-                        onDelete={handleDeleteTransitions}
-                        onClose={() => setShowTransitionPanel(false)}
-                        onPreview={seg => {
-                          const srcBuf = processedSilenceResult?.buffer ?? silenceAudioBuffer;
-                          if (!srcBuf) return;
-                          stopZonePreview();
-                          const ctx = new AudioContext();
-                          silencePreviewCtx.current = ctx;
-                          const src = ctx.createBufferSource();
-                          src.buffer = srcBuf;
-                          src.connect(ctx.destination);
-                          const pad = 0.3;
-                          src.start(0, Math.max(0, seg.startSec - pad), (seg.endSec - seg.startSec) + pad * 2);
-                          silencePreviewSrc.current = src;
-                          setPreviewingSegId(seg.id);
-                          src.onended = () => setPreviewingSegId(null);
-                        }}
-                        previewingId={previewingSegId}
-                      />
-                    )}
                   </div>
                 ) : noSilenceFound ? (
                   <div className="px-4 py-3 flex gap-2">
@@ -2952,20 +2608,6 @@ export default function Tools() {
                       );
                     })()}
 
-                    {/* Force delete toggle — advanced */}
-                    <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${
-                      forceDeleteAll?"bg-red-50 dark:bg-red-950/60 border-red-300 dark:border-red-700":"bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
-                    }`}>
-                      <input type="checkbox" id="forceDelete" checked={forceDeleteAll}
-                        onChange={e => setForceDeleteAll(e.target.checked)}
-                        className="w-4 h-4 accent-red-600 flex-shrink-0 cursor-pointer"/>
-                      <label htmlFor="forceDelete" className="text-xs cursor-pointer">
-                        <span className={`font-semibold ${forceDeleteAll?"text-red-700 dark:text-red-300":"text-slate-700 dark:text-slate-300"}`}>
-                          حذف كل المحدد بدون قيود
-                        </span>
-                        {forceDeleteAll && <span className="block text-red-500 text-xs mt-0.5">⚠ تأكد قبل التنفيذ</span>}
-                      </label>
-                    </div>
                   </div>
                 )}
 
