@@ -1824,52 +1824,6 @@ export default function Tools() {
 
     setIsRemovingSilence(true); setSilenceProgress(0);
     try {
-      // ── وضع ذكي — pipeline كامل بضغطة واحدة ────────────────────────────
-      if (silenceMode === "smart") {
-        const buf = await AudioTrimmerEngine.loadBuffer(currentAudio.url);
-        const { processPrayerMode } = await import('@/components/PrayerModeProcessor');
-        const result = await processPrayerMode(
-          currentAudio.url,
-          buf,
-          (pct, stage) => { setSilenceProgress(pct); setSilenceStage(stage); },
-        );
-
-        if (result.removedCount === 0) {
-          toast.success("لم يُعثر على مقاطع قابلة للحذف في هذا الملف");
-          return;
-        }
-
-        const outBuffer = result.buffer;
-        setSilenceProgress(85);
-        setSilenceResultBuffer(outBuffer);
-        const newName = SilenceProcessor.buildFileName(currentAudio?.name ?? "audio");
-        setSilenceResultName(newName);
-        const dot  = newName.lastIndexOf(".");
-        const base = dot !== -1 ? newName.slice(0, dot) : newName;
-        setSilenceExportName(`${base}.wav`);
-        const outWav = AudioTrimmerEngine.toWav(outBuffer);
-        const newUrl = URL.createObjectURL(outWav);
-        setActiveAudio(newUrl, newName);
-        setSilenceAudioBuffer(outBuffer);
-        setProcessedSilenceResult({
-          buffer:           outBuffer,
-          url:              newUrl,
-          name:             newName,
-          originalDuration: result.originalSec,
-          newDuration:      result.finalSec,
-          removedDuration:  result.removedSec,
-          removedCount:     result.removedCount,
-        });
-        setDetectedSegments([]); setSilenceReport(null);
-        setSilenceProgress(100);
-        addSilenceChip(`✂ ${result.removedCount} مقطع`);
-        toast.success(
-          `✓ حُذف ${result.removedCount} مقطع (${SilenceProcessor.formatDuration(result.removedSec)}) — ` +
-          `المدة الجديدة: ${SilenceProcessor.formatDuration(result.finalSec)}`
-        );
-        return;
-      }
-
       // ── الوضع العادي ─────────────────────────────────────────────────────
       const enabledSegs = detectedSegments.filter(s => s.enabled);
       if (enabledSegs.length === 0) { toast.error("لا توجد نطاقات مُفعَّلة للحذف"); return; }
