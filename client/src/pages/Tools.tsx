@@ -2081,6 +2081,25 @@ export default function Tools() {
   };
 
   // ── PrayerMapPanel handlers ───────────────────────────────────────────────
+  const handlePrayerPreview = (startSec: number, endSec: number) => {
+    const srcBuf = silenceAudioBuffer;
+    if (!srcBuf) return;
+    stopZonePreview();
+    const ctx = new AudioContext();
+    silencePreviewCtx.current = ctx;
+    const src = ctx.createBufferSource();
+    src.buffer = srcBuf;
+    src.connect(ctx.destination);
+    const pad = 0.3;
+    src.start(0, Math.max(0, startSec - pad), (endSec - startSec) + pad * 2);
+    silencePreviewSrc.current = src;
+    src.onended = () => {
+      silencePreviewSrc.current = null;
+      silencePreviewCtx.current?.close().catch(() => {});
+      silencePreviewCtx.current = null;
+    };
+  };
+
   const handlePrayerToggle = (id: string) => {
     setPrayerSegments(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
   };
@@ -2534,6 +2553,7 @@ export default function Tools() {
                       onApply={handlePrayerApply}
                       onSelectAll={handlePrayerSelectAll}
                       isProcessing={isRemovingSilence}
+                      onPreview={handlePrayerPreview}
                     />
                   </div>
                 )}

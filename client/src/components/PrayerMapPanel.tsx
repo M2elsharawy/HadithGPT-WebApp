@@ -7,6 +7,7 @@ interface PrayerMapPanelProps {
   onApply:     () => void;
   onSelectAll: (enabled: boolean) => void;
   isProcessing?: boolean;
+  onPreview?:  (startSec: number, endSec: number) => void;
 }
 
 const CLASS_CONFIG: Record<string, { color: string; bg: string; label: string; emoji: string }> = {
@@ -25,7 +26,7 @@ function fmt(sec: number): string {
 }
 
 export default function PrayerMapPanel({
-  segments, onToggle, onApply, onSelectAll, isProcessing,
+  segments, onToggle, onApply, onSelectAll, isProcessing, onPreview,
 }: PrayerMapPanelProps) {
 
   const stats = useMemo(() => {
@@ -94,6 +95,16 @@ export default function PrayerMapPanel({
                   {seg.durationSec.toFixed(1)}ث · ثقة {Math.round(seg.confidence * 100)}%
                 </div>
               </div>
+              {onPreview && (
+                <button
+                  onClick={() => onPreview(seg.startSec, seg.endSec)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950 transition-colors flex-shrink-0"
+                  aria-label="استماع"
+                  title="استمع لهذا المقطع"
+                >
+                  ▶
+                </button>
+              )}
               {isProtected ? (
                 <span className="text-xs text-green-600 dark:text-green-400 flex-shrink-0">🔒 محمي</span>
               ) : (
@@ -120,7 +131,7 @@ export default function PrayerMapPanel({
         disabled={isProcessing || stats.removeCount === 0}
         className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-sm transition-colors disabled:opacity-40"
       >
-        {isProcessing ? 'جاري الحذف...' : `احذف ${stats.removeCount} مقطع (${fmt(stats.removedSec)})`}
+        {isProcessing ? 'جاري الحذف...' : `احذف المحدد (${stats.removeCount} مقطع · ${fmt(stats.removedSec)})`}
       </button>
     </div>
   );
