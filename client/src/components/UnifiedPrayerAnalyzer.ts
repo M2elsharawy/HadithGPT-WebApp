@@ -189,6 +189,57 @@ export class UnifiedPrayerAnalyzer {
       }
     }
 
+    // ── 5b. أنشئ مقاطع صمت صريحة للفجوات ≥ 1.5s ────────────────────────────
+    const minGapSec  = 1.5;
+    const totalDurSec = audioBuffer.duration;
+    const voiced     = [...segments]; // نسخة من المقاطع الصوتية فقط
+
+    // فجوة قبل أول مقطع
+    if (voiced.length > 0 && voiced[0].startSec >= minGapSec) {
+      segments.push({
+        id: 'sil_0_0', startSec: 0, endSec: voiced[0].startSec,
+        durationSec: voiced[0].startSec, avgRmsDb: -100,
+        temporalDensity: 0, energyVariance: 0,
+        kind: 'silence', confidence: 0.95, protected: false, enabled: true,
+      });
+    }
+    // فجوات بين المقاطع الصوتية
+    for (let i = 0; i < voiced.length - 1; i++) {
+      const gapStart = voiced[i].endSec;
+      const gapEnd   = voiced[i + 1].startSec;
+      const gapDur   = gapEnd - gapStart;
+      if (gapDur >= minGapSec) {
+        segments.push({
+          id:          `sil_${i + 1}_${Math.floor(gapStart)}`,
+          startSec:    gapStart,
+          endSec:      gapEnd,
+          durationSec: gapDur,
+          avgRmsDb:    -100,
+          temporalDensity: 0,
+          energyVariance:  0,
+          kind:        'silence',
+          confidence:  0.95,
+          protected:   false,
+          enabled:     true,
+        });
+      }
+    }
+    // فجوة بعد آخر مقطع
+    if (voiced.length > 0) {
+      const lastEnd  = voiced[voiced.length - 1].endSec;
+      const trailDur = totalDurSec - lastEnd;
+      if (trailDur >= minGapSec) {
+        segments.push({
+          id: `sil_trail_${Math.floor(lastEnd)}`,
+          startSec: lastEnd, endSec: totalDurSec, durationSec: trailDur,
+          avgRmsDb: -100, temporalDensity: 0, energyVariance: 0,
+          kind: 'silence', confidence: 0.95, protected: false, enabled: true,
+        });
+      }
+    }
+    // رتّب الكل حسب وقت البداية
+    segments.sort((a, b) => a.startSec - b.startSec);
+
     // ── 6. احسب الإحصائيات ─────────────────────────────────────────────
     const recitationSec = segments
       .filter(s => s.kind === 'recitation')

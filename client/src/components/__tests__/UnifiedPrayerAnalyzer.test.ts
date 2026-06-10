@@ -132,6 +132,52 @@ describe('UnifiedPrayerAnalyzer', () => {
     expect(result.recitationSec).toBeGreaterThanOrEqual(0);
     expect(result.removableSec).toBeGreaterThanOrEqual(0);
     expect(result.recitationSec + result.removableSec).toBeLessThanOrEqual(result.totalSec + 1);
+
+    // مجموع كل المقاطع يجب أن يغطي مدة الملف (فرق < 1ث)
+    const totalSegSec = result.segments.reduce((a, s) => a + s.durationSec, 0);
+    expect(totalSegSec).toBeGreaterThan(result.totalSec - 1);
+  });
+
+  it('فجوات الصمت ≥ 1.5s تُنشئ مقاطع silence صريحة', () => {
+    // 40s تلاوة + 2s صمت + 4× (1s تكبير + 2s صمت)
+    const SR_LOCAL = 44100;
+    const totalSec = 52;
+    const length   = Math.floor(totalSec * SR_LOCAL);
+    const data     = new Float32Array(length);
+
+    for (let i = 0; i < length; i++) {
+      const t = i / SR_LOCAL;
+      if (t < 40)      data[i] = Math.sin(2 * Math.PI * 440 * i / SR_LOCAL) * 0.5;
+      else if (t < 42) data[i] = 0;
+      else {
+        const cycle = (t - 42) % 3;
+        data[i] = cycle < 1 ? Math.sin(2 * Math.PI * 300 * i / SR_LOCAL) * 0.5 : 0;
+      }
+    }
+    const buf = {
+      sampleRate: SR_LOCAL, duration: totalSec, length,
+      numberOfChannels: 1, getChannelData: () => data,
+    } as unknown as AudioBuffer;
+
+    const result = UnifiedPrayerAnalyzer.analyze(buf, { silenceThresholdDb: -35 });
+
+    const silSegs = result.segments.filter(s => s.kind === 'silence');
+    console.log('\n=== فجوات الصمت ===');
+    silSegs.forEach(s =>
+      console.log(`  ${s.startSec.toFixed(1)}-${s.endSec.toFixed(1)}s dur=${s.durationSec.toFixed(1)} enabled=${s.enabled}`)
+    );
+
+    // يجب أن تكون هناك مقاطع silence صريحة
+    expect(silSegs.length).toBeGreaterThan(0);
+
+    // كل مقطع silence يجب أن يكون enabled=true
+    expect(silSegs.every(s => s.enabled)).toBe(true);
+
+    // مجموع كل المقاطع ≈ مدة الملف (فرق < 1ث)
+    const totalSegSec = result.segments.reduce((a, s) => a + s.durationSec, 0);
+    console.log(`  totalSec=${totalSec} totalSegSec=${totalSegSec.toFixed(1)} gap=${(totalSec-totalSegSec).toFixed(2)}s`);
+    expect(totalSegSec).toBeGreaterThan(totalSec - 1);
+    expect(totalSegSec).toBeLessThan(totalSec + 1);
   });
 
 });
