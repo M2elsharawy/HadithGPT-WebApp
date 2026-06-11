@@ -15,13 +15,13 @@ const STRENGTH_CONFIGS: Record<NoiseReductionOptions["strength"], StrengthConfig
   // Lower gainFloor → maximum attenuation is greater.
   light:  { thresholdOffsetDb: -4, gainFloor: 0.40, expansionRangeDb: 12 },
   medium: { thresholdOffsetDb:  0, gainFloor: 0.20, expansionRangeDb: 12 },
-  strong: { thresholdOffsetDb:  4, gainFloor: 0.10, expansionRangeDb: 12 },
+  strong: { thresholdOffsetDb:  4, gainFloor: 0.20, expansionRangeDb: 12 },
 };
 
 // ── Timing constants ──────────────────────────────────────────────────────────
 
 const FRAME_SIZE      = 512;   // ~11 ms at 44100 Hz — per-frame gain decision
-const ATTACK_TIME_S   = 0.010; // gate opens fast when speech appears
+const ATTACK_TIME_S   = 0.003; // gate opens fast when speech appears
 const RELEASE_TIME_S  = 0.150; // gate closes slowly to preserve natural pauses
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
