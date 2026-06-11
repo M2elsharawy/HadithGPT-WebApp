@@ -1,3 +1,5 @@
+import type { PipelineVariantId } from "./PipelineVariants";
+
 // ─── Audio Analysis ───────────────────────────────────────────────────────────
 
 export interface AudioAnalysisReport {
@@ -38,6 +40,9 @@ export interface NoiseReductionOptions {
   strength: "light" | "medium" | "strong";
   // "spectral" reserved — only "broadband" is implemented in Phase D
   mode:     "broadband" | "spectral";
+  // Blend ratio between processed (1.0) and original (0.0). Default: 1.0 (fully processed).
+  // Clamped to [0, 1]. Omitting is identical to 1.0 — no behaviour change.
+  wetDryRatio?: number;
 }
 
 export interface DeReverbOptions {
@@ -75,6 +80,10 @@ export interface EnhancementOptions {
 
   // De-reverb — implemented in Phase E
   deReverb:          DeReverbOptions;
+
+  // Pipeline variant — read by AudioEnhancementEngine to select stage order.
+  // Omitting this field (or setting it to "legacy") preserves existing behaviour exactly.
+  pipelineVariant?: PipelineVariantId;
 }
 
 // ─── Enhancement Result ───────────────────────────────────────────────────────

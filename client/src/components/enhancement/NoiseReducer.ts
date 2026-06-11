@@ -157,6 +157,22 @@ export class NoiseReducer {
       }
     }
 
+    // ── 5. Wet/dry blend ─────────────────────────────────────────────────────
+    // wetDryRatio: 1.0 = fully processed (default), 0.0 = original.
+    // Values outside [0, 1] are clamped. When wet === 1.0 the blend block is
+    // skipped entirely, so omitting the option is a strict no-op.
+    const wetRatio = Math.max(0, Math.min(1, options.wetDryRatio ?? 1.0));
+    if (wetRatio < 1.0) {
+      const dryRatio = 1 - wetRatio;
+      for (let ch = 0; ch < numberOfChannels; ch++) {
+        const orig = buffer.getChannelData(ch);
+        const proc = out.getChannelData(ch);
+        for (let i = 0; i < length; i++) {
+          proc[i] = wetRatio * proc[i] + dryRatio * orig[i];
+        }
+      }
+    }
+
     onProgress?.(90, "اكتملت معالجة الضوضاء");
 
     return { buffer: out, profile };
