@@ -6,6 +6,48 @@ import { LoudnessNormalizer } from "./LoudnessNormalizer";
 import { NoiseReducer }       from "./NoiseReducer";
 import type { EnhancementOptions, EnhancementReport, EnhancementResult } from "./types";
 
+// ── Presence/air boost safety ─────────────────────────────────────────────────
+// When SNR is low the noise floor is close to the speech level.  Applying
+// full presence/air boosts would amplify noise as much as speech.
+// Two-tier conservative scale-back: only positive boosts are reduced; negative
+// boosts (cuts) and zero values are never touched.
+
+const BOOST_SAFETY_HARD_THRESHOLD_DB = 12;   // SNR < 12 dB  → scale to 50 %
+const BOOST_SAFETY_SOFT_THRESHOLD_DB = 18;   // SNR < 18 dB  → scale to 75 %
+
+export interface BoostSafetyResult {
+  presenceBoostDb: number;
+  airBoostDb:      number;
+  adjusted:        boolean;
+  scale:           number;   // 1.0 = no change; <1.0 = attenuated
+}
+
+/**
+ * Returns scaled presence/air boost values for noisy recordings.
+ * Exported as a pure function so it can be unit-tested without
+ * OfflineAudioContext.
+ */
+export function applyPresenceAirSafety(
+  presenceBoostDb: number,
+  airBoostDb:      number,
+  snrDb:           number,
+): BoostSafetyResult {
+  let scale = 1.0;
+  if (snrDb < BOOST_SAFETY_HARD_THRESHOLD_DB) {
+    scale = 0.5;
+  } else if (snrDb < BOOST_SAFETY_SOFT_THRESHOLD_DB) {
+    scale = 0.75;
+  }
+
+  const adjusted = scale < 1.0 && (presenceBoostDb > 0 || airBoostDb > 0);
+  return {
+    presenceBoostDb: presenceBoostDb > 0 ? presenceBoostDb * scale : presenceBoostDb,
+    airBoostDb:      airBoostDb      > 0 ? airBoostDb      * scale : airBoostDb,
+    adjusted,
+    scale,
+  };
+}
+
 /**
  * AudioEnhancementEngine
  *
@@ -83,22 +125,35 @@ export class AudioEnhancementEngine {
       appliedStages.push(`de_reverb_${options.deReverb.amount}`);
     }
 
-    // ── 5. Dynamics processing (38–82%) ──────────────────────────────────────
+    // ── 5. Presence/air boost safety ─────────────────────────────────────────
+    // Reduce positive presence/air boosts on noisy recordings (low SNR) so
+    // noise is not amplified together with speech.  The original `options`
+    // object is never mutated — a shallow spread copy is used when needed.
+    const safeBoosts    = applyPresenceAirSafety(
+      options.presenceBoostDb,
+      options.airBoostDb,
+      before.snrDb,
+    );
+    const dynamicsOptions: EnhancementOptions = safeBoosts.adjusted
+      ? { ...options, presenceBoostDb: safeBoosts.presenceBoostDb, airBoostDb: safeBoosts.airBoostDb }
+      : options;
+
+    // ── 6. Dynamics processing (38–82%) ──────────────────────────────────────
     progress(38, "جاري إعداد المعالجة...");
     const processed = await DynamicsProcessor.process(
       drBuffer,
-      options,
+      dynamicsOptions,
       (pct, stage) => progress(38 + Math.round(pct * 0.44), stage),
     );
 
-    if (options.highPassHz      > 0)                                  appliedStages.push("high_pass");
-    if (options.warmthHz        > 0 && options.warmthDb       !== 0)  appliedStages.push("warmth");
-    if (options.presenceBoostHz > 0 && options.presenceBoostDb !== 0) appliedStages.push("presence");
-    if (options.airBoostHz      > 0 && options.airBoostDb      !== 0) appliedStages.push("air");
-    if (options.compressor.enabled)                                   appliedStages.push("compressor");
-    if (options.limiter.enabled)                                      appliedStages.push("limiter");
+    if (options.highPassHz      > 0)                                       appliedStages.push("high_pass");
+    if (options.warmthHz        > 0 && options.warmthDb        !== 0)     appliedStages.push("warmth");
+    if (options.presenceBoostHz > 0 && dynamicsOptions.presenceBoostDb !== 0) appliedStages.push("presence");
+    if (options.airBoostHz      > 0 && dynamicsOptions.airBoostDb      !== 0) appliedStages.push("air");
+    if (options.compressor.enabled)                                        appliedStages.push("compressor");
+    if (options.limiter.enabled)                                           appliedStages.push("limiter");
 
-    // ── 6. Peak normalization (82%) ───────────────────────────────────────────
+    // ── 7. Peak normalization (82%) ───────────────────────────────────────────
     progress(82, "جاري التطبيع...");
     let finalBuffer         = processed;
     let normalizationGainDb = 0;
@@ -110,7 +165,7 @@ export class AudioEnhancementEngine {
       appliedStages.push("peak_normalize");
     }
 
-    // ── 7. Analyze output (94%) ───────────────────────────────────────────────
+    // ── 8. Analyze output (94%) ───────────────────────────────────────────────
     progress(94, "جاري تحليل النتيجة...");
     const after = AudioAnalyzer.analyze(finalBuffer);
 
@@ -133,6 +188,11 @@ export class AudioEnhancementEngine {
       deReverbApplied:          options.deReverb.enabled,
       deReverbAmount:           options.deReverb.enabled ? options.deReverb.amount : undefined,
       reverbTailReductionDb:    options.deReverb.enabled ? drResult.reverbTailReductionDb : undefined,
+
+      presenceBoostAdjusted:    safeBoosts.adjusted || undefined,
+      appliedPresenceBoostDb:   safeBoosts.adjusted ? safeBoosts.presenceBoostDb : undefined,
+      appliedAirBoostDb:        safeBoosts.adjusted ? safeBoosts.airBoostDb      : undefined,
+      snrDbUsedForSafety:       safeBoosts.adjusted ? before.snrDb               : undefined,
     };
 
     progress(100, "اكتملت المعالجة ✓");
