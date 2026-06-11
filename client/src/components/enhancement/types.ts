@@ -108,6 +108,12 @@ export interface EnhancementReport {
   deReverbApplied:          boolean;
   deReverbAmount?:          "light" | "medium";
   reverbTailReductionDb?:   number;
+
+  // Presence/air boost safety — set only when SNR was low enough to trigger scaling
+  presenceBoostAdjusted?:   boolean;
+  appliedPresenceBoostDb?:  number;
+  appliedAirBoostDb?:       number;
+  snrDbUsedForSafety?:      number;
 }
 
 export interface EnhancementResult {
