@@ -1,3 +1,4 @@
+import { createOfflineAudioContext } from "./AudioContextFactory";
 import type { EnhancementOptions } from "./types";
 
 /**
@@ -16,7 +17,7 @@ export class DynamicsProcessor {
 
     onProgress?.(5, "جاري إعداد سلسلة المعالجة...");
 
-    const offline = new OfflineAudioContext(numberOfChannels, length, sampleRate);
+    const offline = createOfflineAudioContext(numberOfChannels, length, sampleRate);
     const src     = offline.createBufferSource();
     src.buffer    = buffer;
 

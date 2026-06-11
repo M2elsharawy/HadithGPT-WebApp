@@ -27,12 +27,11 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   };
 
   try {
-    const ctx = new OfflineAudioContext(
-      req.numberOfChannels,
-      req.length,
-      req.sampleRate,
-    );
-    const buffer = ctx.createBuffer(req.numberOfChannels, req.length, req.sampleRate);
+    const buffer = new AudioBuffer({
+      numberOfChannels: req.numberOfChannels,
+      length:           req.length,
+      sampleRate:       req.sampleRate,
+    });
     for (let ch = 0; ch < req.numberOfChannels; ch++) {
       buffer.copyToChannel(req.channels[ch], ch);
     }

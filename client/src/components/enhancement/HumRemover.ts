@@ -1,3 +1,4 @@
+import { createOfflineAudioContext } from "./AudioContextFactory";
 import type { HumRemovalOptions } from "./types";
 
 const HARMONICS_50 = [50, 100, 150, 200] as const;
@@ -54,7 +55,7 @@ export class HumRemover {
 
     onProgress?.(10, "جاري إزالة الطنين الكهربائي...");
 
-    const offline = new OfflineAudioContext(numberOfChannels, length, sampleRate);
+    const offline = createOfflineAudioContext(numberOfChannels, length, sampleRate);
     const src     = offline.createBufferSource();
     src.buffer    = buffer;
 
