@@ -1,3 +1,4 @@
+import { NoiseProfileAnalyzer } from "./NoiseProfileAnalyzer";
 import type { AudioAnalysisReport } from "./types";
 
 const linToDb = (lin: number): number =>
@@ -6,14 +7,17 @@ const linToDb = (lin: number): number =>
 export class AudioAnalyzer {
   /**
    * Analyze an AudioBuffer and return peak, RMS, noise-floor estimate,
-   * and basic metadata. Does NOT mutate the buffer.
+   * SNR, and basic metadata. Does NOT mutate the buffer.
+   *
+   * estimatedNoiseFloorDb is now sourced from NoiseProfileAnalyzer so it
+   * matches the value used by NoiseReducer during processing.
    */
   static analyze(buffer: AudioBuffer): AudioAnalysisReport {
-    const { numberOfChannels, sampleRate, length, duration } = buffer;
+    const { numberOfChannels, sampleRate, duration } = buffer;
 
-    let peakLinear = 0;
-    let sumSq      = 0;
-    let totalSamples = 0;
+    let peakLinear       = 0;
+    let sumSq            = 0;
+    let totalSamples     = 0;
     let clippingDetected = false;
 
     for (let ch = 0; ch < numberOfChannels; ch++) {
@@ -28,30 +32,18 @@ export class AudioAnalyzer {
     }
 
     const rmsLinear = totalSamples > 0 ? Math.sqrt(sumSq / totalSamples) : 0;
+    const rmsDb     = linToDb(rmsLinear);
 
-    // Noise-floor: 10th percentile of 100 ms windowed RMS (ch 0 only)
-    const windowFrames = Math.floor(sampleRate * 0.1);
-    const numWindows   = Math.max(1, Math.floor(length / windowFrames));
-    const ch0          = buffer.getChannelData(0);
-    const windowRms: number[] = [];
-
-    for (let w = 0; w < numWindows; w++) {
-      let wSumSq = 0;
-      const start = w * windowFrames;
-      const end   = Math.min(start + windowFrames, length);
-      for (let i = start; i < end; i++) wSumSq += ch0[i] * ch0[i];
-      windowRms.push(Math.sqrt(wSumSq / (end - start)));
-    }
-
-    windowRms.sort((a, b) => a - b);
-    const pctIdx        = Math.floor(windowRms.length * 0.10);
-    const noiseFloorLin = windowRms[pctIdx] ?? windowRms[0] ?? 0;
+    const profile               = NoiseProfileAnalyzer.analyze(buffer);
+    const estimatedNoiseFloorDb = profile.noiseFloorDb;
+    const snrDb                 = rmsDb - estimatedNoiseFloorDb;
 
     return {
-      peakDb:                linToDb(peakLinear),
-      rmsDb:                 linToDb(rmsLinear),
-      estimatedNoiseFloorDb: linToDb(noiseFloorLin),
-      durationSec:           duration,
+      peakDb: linToDb(peakLinear),
+      rmsDb,
+      estimatedNoiseFloorDb,
+      snrDb,
+      durationSec:    duration,
       sampleRate,
       numberOfChannels,
       clippingDetected,

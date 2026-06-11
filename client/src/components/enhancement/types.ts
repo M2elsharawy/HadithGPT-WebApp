@@ -6,6 +6,7 @@ export interface AudioAnalysisReport {
   peakDb:                 number;
   rmsDb:                  number;
   estimatedNoiseFloorDb:  number;
+  snrDb:                  number;   // rmsDb − estimatedNoiseFloorDb; analytical only
   durationSec:            number;
   sampleRate:             number;
   numberOfChannels:       number;
