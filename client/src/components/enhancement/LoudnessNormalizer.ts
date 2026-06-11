@@ -1,3 +1,5 @@
+import { createAudioBuffer } from "./AudioContextFactory";
+
 export interface NormalizationResult {
   buffer:             AudioBuffer;
   gainAppliedDb:      number;
@@ -34,7 +36,7 @@ export class LoudnessNormalizer {
 
     // Silent buffer — return identity copy
     if (peakLinear < 1e-9) {
-      const silent = new AudioBuffer({ numberOfChannels, length, sampleRate });
+      const silent = createAudioBuffer({ numberOfChannels, length, sampleRate });
       for (let ch = 0; ch < numberOfChannels; ch++) {
         silent.getChannelData(ch).set(buffer.getChannelData(ch));
       }
@@ -51,7 +53,7 @@ export class LoudnessNormalizer {
     const gainDb     = 20 * Math.log10(gainLinear);
 
     // 2. Apply gain into a new AudioBuffer
-    const out = new AudioBuffer({ numberOfChannels, length, sampleRate });
+    const out = createAudioBuffer({ numberOfChannels, length, sampleRate });
     for (let ch = 0; ch < numberOfChannels; ch++) {
       const src = buffer.getChannelData(ch);
       const dst = out.getChannelData(ch);

@@ -1,3 +1,4 @@
+import { createAudioBuffer }    from "./AudioContextFactory";
 import { NoiseProfileAnalyzer } from "./NoiseProfileAnalyzer";
 import type { NoiseProfile }     from "./NoiseProfileAnalyzer";
 import type { NoiseReductionOptions } from "./types";
@@ -27,7 +28,7 @@ const RELEASE_TIME_S  = 0.150; // gate closes slowly to preserve natural pauses
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function cloneBuffer(src: AudioBuffer): AudioBuffer {
-  const out = new AudioBuffer({
+  const out = createAudioBuffer({
     numberOfChannels: src.numberOfChannels,
     length:           src.length,
     sampleRate:       src.sampleRate,
@@ -139,7 +140,7 @@ export class NoiseReducer {
     const releaseCoeff = Math.exp(-1 / (sampleRate * RELEASE_TIME_S));
 
     // ── 4. Apply gain per channel ─────────────────────────────────────────────
-    const out = new AudioBuffer({ numberOfChannels, length, sampleRate });
+    const out = createAudioBuffer({ numberOfChannels, length, sampleRate });
 
     for (let ch = 0; ch < numberOfChannels; ch++) {
       const src = buffer.getChannelData(ch);

@@ -2,6 +2,7 @@
 /// <reference lib="webworker" />
 
 import { AudioEnhancementEngine } from '../components/enhancement/AudioEnhancementEngine';
+import { createAudioBuffer }       from '../components/enhancement/AudioContextFactory';
 import type { EnhancementOptions, EnhancementReport } from '../components/enhancement/types';
 
 export type WorkerRequest = {
@@ -27,7 +28,7 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   };
 
   try {
-    const buffer = new AudioBuffer({
+    const buffer = createAudioBuffer({
       numberOfChannels: req.numberOfChannels,
       length:           req.length,
       sampleRate:       req.sampleRate,

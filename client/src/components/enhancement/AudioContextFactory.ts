@@ -27,3 +27,25 @@ export function createOfflineAudioContext(
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   return new Ctor(numberOfChannels, length, sampleRate) as OfflineAudioContext;
 }
+
+/**
+ * Worker-safe AudioBuffer constructor.
+ *
+ * Safari module workers do not expose AudioBuffer as a bare global —
+ * it must be accessed via globalThis. This helper resolves the constructor
+ * through globalThis and throws a clear error if it is not present.
+ */
+export function createAudioBuffer(options: {
+  numberOfChannels: number;
+  length: number;
+  sampleRate: number;
+}): AudioBuffer {
+  const Ctor = (globalThis as typeof globalThis & { AudioBuffer?: typeof AudioBuffer })
+    .AudioBuffer;
+
+  if (!Ctor) {
+    throw new Error("AudioBuffer is not supported in this worker/runtime");
+  }
+
+  return new Ctor(options);
+}

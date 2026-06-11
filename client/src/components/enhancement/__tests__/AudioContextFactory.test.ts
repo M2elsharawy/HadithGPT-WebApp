@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { createOfflineAudioContext } from "../AudioContextFactory";
+import { createOfflineAudioContext, createAudioBuffer } from "../AudioContextFactory";
 
 // ── AudioContextFactory ───────────────────────────────────────────────────────
 // Tests run in Node.js where OfflineAudioContext does not exist by default.
@@ -101,5 +101,73 @@ describe("createOfflineAudioContext", () => {
 
   it("thrown error is an instance of Error", () => {
     expect(() => createOfflineAudioContext(1, 44100, 44100)).toThrow(Error);
+  });
+});
+
+// ── createAudioBuffer ─────────────────────────────────────────────────────────
+
+class MockAudioBufferCtor {
+  readonly numberOfChannels: number;
+  readonly length: number;
+  readonly sampleRate: number;
+  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
+    this.numberOfChannels = opts.numberOfChannels;
+    this.length           = opts.length;
+    this.sampleRate       = opts.sampleRate;
+  }
+}
+
+describe("createAudioBuffer", () => {
+  let origAB: unknown;
+
+  beforeEach(() => {
+    origAB = (globalThis as Record<string, unknown>).AudioBuffer;
+    removeProp("AudioBuffer");
+  });
+
+  afterEach(() => {
+    if (origAB !== undefined) {
+      (globalThis as Record<string, unknown>).AudioBuffer = origAB;
+    } else {
+      removeProp("AudioBuffer");
+    }
+  });
+
+  // ── Standard path ─────────────────────────────────────────────────────────
+
+  it("uses globalThis.AudioBuffer when available", () => {
+    (globalThis as Record<string, unknown>).AudioBuffer = MockAudioBufferCtor;
+    const buf = createAudioBuffer({ numberOfChannels: 1, length: 1024, sampleRate: 44100 });
+    expect(buf).toBeInstanceOf(MockAudioBufferCtor);
+  });
+
+  it("passes numberOfChannels, length, sampleRate as options object", () => {
+    (globalThis as Record<string, unknown>).AudioBuffer = MockAudioBufferCtor;
+    const buf = createAudioBuffer({ numberOfChannels: 2, length: 8000, sampleRate: 48000 }) as unknown as MockAudioBufferCtor;
+    expect(buf.numberOfChannels).toBe(2);
+    expect(buf.length).toBe(8000);
+    expect(buf.sampleRate).toBe(48000);
+  });
+
+  it("passes all three fields (mono, 44100, short buffer)", () => {
+    (globalThis as Record<string, unknown>).AudioBuffer = MockAudioBufferCtor;
+    const buf = createAudioBuffer({ numberOfChannels: 1, length: 512, sampleRate: 44100 }) as unknown as MockAudioBufferCtor;
+    expect(buf.numberOfChannels).toBe(1);
+    expect(buf.length).toBe(512);
+    expect(buf.sampleRate).toBe(44100);
+  });
+
+  // ── Error path ────────────────────────────────────────────────────────────
+
+  it("throws when globalThis.AudioBuffer is not available", () => {
+    expect(() =>
+      createAudioBuffer({ numberOfChannels: 1, length: 1024, sampleRate: 44100 }),
+    ).toThrowError("AudioBuffer is not supported in this worker/runtime");
+  });
+
+  it("thrown error is an instance of Error", () => {
+    expect(() =>
+      createAudioBuffer({ numberOfChannels: 1, length: 1024, sampleRate: 44100 }),
+    ).toThrow(Error);
   });
 });
