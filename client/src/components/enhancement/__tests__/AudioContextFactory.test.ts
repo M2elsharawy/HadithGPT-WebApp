@@ -117,12 +117,45 @@ class MockAudioBufferCtor {
   }
 }
 
+// Returned by MockOACWithCreateBuffer.createBuffer — distinct class so tests
+// can verify which path was taken.
+class MockAudioBufferFromOAC {
+  readonly numberOfChannels: number;
+  readonly length: number;
+  readonly sampleRate: number;
+  constructor(ch: number, len: number, sr: number) {
+    this.numberOfChannels = ch;
+    this.length           = len;
+    this.sampleRate       = sr;
+  }
+}
+
+class MockOACWithCreateBuffer {
+  readonly numberOfChannels: number;
+  readonly length: number;
+  readonly sampleRate: number;
+  constructor(numberOfChannels: number, length: number, sampleRate: number) {
+    this.numberOfChannels = numberOfChannels;
+    this.length           = length;
+    this.sampleRate       = sampleRate;
+  }
+  createBuffer(numberOfChannels: number, length: number, sampleRate: number): MockAudioBufferFromOAC {
+    return new MockAudioBufferFromOAC(numberOfChannels, length, sampleRate);
+  }
+}
+
 describe("createAudioBuffer", () => {
-  let origAB: unknown;
+  let origAB:         unknown;
+  let origOAC:        unknown;
+  let origWebkitOAC:  unknown;
 
   beforeEach(() => {
-    origAB = (globalThis as Record<string, unknown>).AudioBuffer;
+    origAB        = (globalThis as Record<string, unknown>).AudioBuffer;
+    origOAC       = (globalThis as Record<string, unknown>).OfflineAudioContext;
+    origWebkitOAC = (globalThis as Record<string, unknown>).webkitOfflineAudioContext;
     removeProp("AudioBuffer");
+    removeProp("OfflineAudioContext");
+    removeProp("webkitOfflineAudioContext");
   });
 
   afterEach(() => {
@@ -131,9 +164,19 @@ describe("createAudioBuffer", () => {
     } else {
       removeProp("AudioBuffer");
     }
+    if (origOAC !== undefined) {
+      (globalThis as Record<string, unknown>).OfflineAudioContext = origOAC;
+    } else {
+      removeProp("OfflineAudioContext");
+    }
+    if (origWebkitOAC !== undefined) {
+      (globalThis as Record<string, unknown>).webkitOfflineAudioContext = origWebkitOAC;
+    } else {
+      removeProp("webkitOfflineAudioContext");
+    }
   });
 
-  // ── Standard path ─────────────────────────────────────────────────────────
+  // ── Standard path (AudioBuffer available) ─────────────────────────────────
 
   it("uses globalThis.AudioBuffer when available", () => {
     (globalThis as Record<string, unknown>).AudioBuffer = MockAudioBufferCtor;
@@ -157,12 +200,28 @@ describe("createAudioBuffer", () => {
     expect(buf.sampleRate).toBe(44100);
   });
 
-  // ── Error path ────────────────────────────────────────────────────────────
+  // ── OAC fallback path (AudioBuffer absent, OfflineAudioContext present) ───
 
-  it("throws when globalThis.AudioBuffer is not available", () => {
+  it("falls back to OfflineAudioContext.createBuffer when AudioBuffer is absent", () => {
+    (globalThis as Record<string, unknown>).OfflineAudioContext = MockOACWithCreateBuffer;
+    const buf = createAudioBuffer({ numberOfChannels: 1, length: 1024, sampleRate: 44100 });
+    expect(buf).toBeInstanceOf(MockAudioBufferFromOAC);
+  });
+
+  it("fallback path passes numberOfChannels, length, sampleRate correctly", () => {
+    (globalThis as Record<string, unknown>).OfflineAudioContext = MockOACWithCreateBuffer;
+    const buf = createAudioBuffer({ numberOfChannels: 2, length: 4800, sampleRate: 48000 }) as unknown as MockAudioBufferFromOAC;
+    expect(buf.numberOfChannels).toBe(2);
+    expect(buf.length).toBe(4800);
+    expect(buf.sampleRate).toBe(48000);
+  });
+
+  // ── Error path (neither AudioBuffer nor OfflineAudioContext available) ────
+
+  it("throws when both AudioBuffer and OfflineAudioContext are unavailable", () => {
     expect(() =>
       createAudioBuffer({ numberOfChannels: 1, length: 1024, sampleRate: 44100 }),
-    ).toThrowError("AudioBuffer is not supported in this worker/runtime");
+    ).toThrowError("OfflineAudioContext is not supported in this browser/runtime");
   });
 
   it("thrown error is an instance of Error", () => {

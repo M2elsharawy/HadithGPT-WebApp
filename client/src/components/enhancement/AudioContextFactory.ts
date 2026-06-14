@@ -29,11 +29,13 @@ export function createOfflineAudioContext(
 }
 
 /**
- * Worker-safe AudioBuffer constructor.
+ * Worker-safe AudioBuffer constructor with OfflineAudioContext fallback.
  *
- * Safari module workers do not expose AudioBuffer as a bare global —
- * it must be accessed via globalThis. This helper resolves the constructor
- * through globalThis and throws a clear error if it is not present.
+ * Safari module workers may not expose AudioBuffer as a bare global.
+ * Primary path: globalThis.AudioBuffer constructor.
+ * Fallback path: createOfflineAudioContext().createBuffer() — always available
+ * when any OfflineAudioContext variant is present (standard or webkit-prefixed).
+ * Throws only if neither AudioBuffer nor any OfflineAudioContext is available.
  */
 export function createAudioBuffer(options: {
   numberOfChannels: number;
@@ -43,9 +45,19 @@ export function createAudioBuffer(options: {
   const Ctor = (globalThis as typeof globalThis & { AudioBuffer?: typeof AudioBuffer })
     .AudioBuffer;
 
-  if (!Ctor) {
-    throw new Error("AudioBuffer is not supported in this worker/runtime");
+  if (Ctor) {
+    return new Ctor(options);
   }
 
-  return new Ctor(options);
+  const ctx = createOfflineAudioContext(
+    options.numberOfChannels,
+    options.length,
+    options.sampleRate,
+  );
+
+  return ctx.createBuffer(
+    options.numberOfChannels,
+    options.length,
+    options.sampleRate,
+  );
 }
