@@ -48,7 +48,7 @@ export interface NoiseReductionOptions {
 
 export interface DeReverbOptions {
   enabled: boolean;
-  amount:  "light" | "medium";
+  amount:  "light" | "medium" | "strong";
 }
 
 export interface EnhancementOptions {
@@ -106,7 +106,7 @@ export interface EnhancementReport {
   noiseThresholdDb?:        number;
   noiseFramesUsed?:         number;
   deReverbApplied:          boolean;
-  deReverbAmount?:          "light" | "medium";
+  deReverbAmount?:          "light" | "medium" | "strong";
   reverbTailReductionDb?:   number;
 
   // Presence/air boost safety — set only when SNR was low enough to trigger scaling

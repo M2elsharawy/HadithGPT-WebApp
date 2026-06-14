@@ -2922,7 +2922,7 @@ export default function Tools() {
                 </div>
                 {drEnabled && (
                   <div className="flex gap-1.5">
-                    {(["light", "medium"] as const).map(a => (
+                    {(["light", "medium", "strong"] as const).map(a => (
                       <button key={a}
                         onClick={() => setDrAmount(a)}
                         className={`flex-1 py-1 rounded-md text-xs font-medium transition-all ${
@@ -2930,7 +2930,7 @@ export default function Tools() {
                             ? "bg-teal-500 text-white"
                             : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600"
                         }`}>
-                        {a === "light" ? "خفيف" : "متوسط"}
+                        {a === "light" ? "خفيف" : a === "medium" ? "متوسط" : "قوي"}
                       </button>
                     ))}
                   </div>

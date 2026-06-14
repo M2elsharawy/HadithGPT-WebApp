@@ -23,6 +23,12 @@ const CONFIGS: Record<DeReverbOptions["amount"], AmountConfig> = {
     gainFloor:       0.40,  // max attenuation: −8.0 dB
     gainSmoothTime:  0.005,
   },
+  strong: {
+    peakReleaseTime: 0.380, // faster gate release between phrases
+    thresholdRatio:  0.45,  // trigger attenuation when signal drops to < 45% of peak
+    gainFloor:       0.22,  // max attenuation: −13.2 dB — targets PA loudspeaker ringing
+    gainSmoothTime:  0.005, // same as medium — avoids pumping artifacts
+  },
 };
 
 const RMS_SMOOTH_S    = 0.010;  // 10 ms short-term RMS smoother
