@@ -1,3 +1,4 @@
+import { createAudioBuffer } from "./AudioContextFactory";
 import type { DeReverbOptions } from "./types";
 
 // ── Amount configuration ──────────────────────────────────────────────────────
@@ -35,7 +36,7 @@ export interface DeReverbResult {
 }
 
 function cloneBuffer(src: AudioBuffer): AudioBuffer {
-  const out = new AudioBuffer({
+  const out = createAudioBuffer({
     numberOfChannels: src.numberOfChannels,
     length:           src.length,
     sampleRate:       src.sampleRate,
@@ -109,7 +110,7 @@ export class DeReverbProcessor {
 
     onProgress?.(15, "جاري معالجة صدى الغرفة...");
 
-    const out = new AudioBuffer({ numberOfChannels, length, sampleRate });
+    const out = createAudioBuffer({ numberOfChannels, length, sampleRate });
     const dstData: Float32Array[] = [];
     for (let ch = 0; ch < numberOfChannels; ch++) {
       dstData.push(out.getChannelData(ch));

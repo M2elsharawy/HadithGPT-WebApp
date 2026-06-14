@@ -1,4 +1,4 @@
-import { createOfflineAudioContext } from "./AudioContextFactory";
+import { createOfflineAudioContext, createAudioBuffer } from "./AudioContextFactory";
 import type { HumRemovalOptions } from "./types";
 
 const HARMONICS_50 = [50, 100, 150, 200] as const;
@@ -12,7 +12,7 @@ const Q_BY_STRENGTH: Record<HumRemovalOptions["strength"], number> = {
 };
 
 function cloneBuffer(src: AudioBuffer): AudioBuffer {
-  const out = new AudioBuffer({
+  const out = createAudioBuffer({
     numberOfChannels: src.numberOfChannels,
     length:           src.length,
     sampleRate:       src.sampleRate,

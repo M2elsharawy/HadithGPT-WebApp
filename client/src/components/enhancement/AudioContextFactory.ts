@@ -27,3 +27,37 @@ export function createOfflineAudioContext(
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   return new Ctor(numberOfChannels, length, sampleRate) as OfflineAudioContext;
 }
+
+/**
+ * Worker-safe AudioBuffer constructor with OfflineAudioContext fallback.
+ *
+ * Safari module workers may not expose AudioBuffer as a bare global.
+ * Primary path: globalThis.AudioBuffer constructor.
+ * Fallback path: createOfflineAudioContext().createBuffer() — always available
+ * when any OfflineAudioContext variant is present (standard or webkit-prefixed).
+ * Throws only if neither AudioBuffer nor any OfflineAudioContext is available.
+ */
+export function createAudioBuffer(options: {
+  numberOfChannels: number;
+  length: number;
+  sampleRate: number;
+}): AudioBuffer {
+  const Ctor = (globalThis as typeof globalThis & { AudioBuffer?: typeof AudioBuffer })
+    .AudioBuffer;
+
+  if (Ctor) {
+    return new Ctor(options);
+  }
+
+  const ctx = createOfflineAudioContext(
+    options.numberOfChannels,
+    options.length,
+    options.sampleRate,
+  );
+
+  return ctx.createBuffer(
+    options.numberOfChannels,
+    options.length,
+    options.sampleRate,
+  );
+}
