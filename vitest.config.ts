@@ -19,6 +19,7 @@ export default defineConfig({
       "server/**/*.spec.ts",
       "client/src/components/enhancement/__tests__/**/*.test.ts",
       "client/src/components/__tests__/**/*.test.ts",
+      "client/src/utils/__tests__/**/*.test.ts",
     ],
   },
 });
