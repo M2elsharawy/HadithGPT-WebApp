@@ -3003,6 +3003,16 @@ export default function Tools() {
                 </div>
               )}
 
+              {/* Saturation / near-speaker recording advisory note */}
+              {showSaturationNote && (
+                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 rounded-lg p-3 text-xs text-amber-900 dark:text-amber-200 space-y-2" dir="rtl">
+                  <p className="font-semibold">⚠ تنبيه حول جودة التسجيل</p>
+                  <p className="leading-relaxed">يبدو أن هذا التسجيل قد يحتوي على تشبع أو تشوه ناتج عن قرب جهاز التسجيل من سماعة قوية أو من ارتفاع مستوى الصوت أثناء التسجيل. في هذه الحالة تكون بعض الشوشرة أو النغبشة مطبوعة داخل الصوت الأصلي نفسه، وليست مجرد ضوضاء خارجية منفصلة.</p>
+                  <p className="leading-relaxed">لذلك قد يكون التحسين محدودًا، وقد لا تختفي الشوشرة بالكامل دون التأثير على وضوح الكلام أو التلاوة.</p>
+                  <p className="leading-relaxed">للحصول على نتيجة أفضل، جرّب تسجيل الصوت من مسافة أبعد عن السماعة، أو خفّض مستوى الصوت قليلًا، أو ضع جهاز التسجيل بزاوية جانبية بدلًا من وضعه أمام السماعة مباشرة.</p>
+                </div>
+              )}
+
               {/* Phase F: A/B Comparison Controls */}
               {enhancementReport && !isEnhancing && originalAudioBufferRef && enhancedAudioBufferRef && (
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-lg p-3 space-y-2 border border-blue-200 dark:border-blue-800">
@@ -3343,6 +3353,13 @@ export default function Tools() {
     color:    s.enabled ? "red" : "gray",
     label:    s.enabled ? "✂" : "—",
   }));
+
+  const showSaturationNote = !!enhancementReport?.artifactDiagnostics && (
+    enhancementReport.artifactDiagnostics.dominantArtifactType === "mic_saturation" ||
+    enhancementReport.artifactDiagnostics.saturationLikelihood === "medium" ||
+    enhancementReport.artifactDiagnostics.saturationLikelihood === "high" ||
+    enhancementReport.artifactDiagnostics.nearSaturationRatio > 0.01
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
