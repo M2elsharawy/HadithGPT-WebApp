@@ -87,6 +87,54 @@ export interface EnhancementOptions {
   pipelineVariant?: PipelineVariantId;
 }
 
+// ─── Artifact Diagnostics ─────────────────────────────────────────────────────
+
+/**
+ * Read-only, non-destructive artifact classification report.
+ * Computed from the input buffer before any processing.
+ * Audio output is never modified by this analysis.
+ */
+export interface ArtifactDiagnostics {
+  // 20 × log10(p90_frame_rms / p10_frame_rms).
+  // HIGH (> 20 dB): clean dynamics — temporal gating has leverage.
+  // LOW  (< 10 dB): sustained artifact — temporal gating cannot help.
+  speechToGapRmsRatioDb:      number;
+
+  // Spectral flatness of the bottom-25th-percentile frames (quiet sections).
+  // Near 0 → tonal/resonant (PA ringing).  Near 1 → broadband (noise/reverb).
+  gapSpectralFlatness:        number;
+  // Top spectral peaks in quiet frames (Hz). Populated only when flatness < 0.30.
+  dominantGapFrequenciesHz:   number[];
+
+  // Mean std-dev (dB) of short-term RMS in the 50–300 ms post-transient window.
+  // High → PA limiter/compressor pump.  Requires ≥ 3 detected onsets.
+  envelopeModulationDepthDb:  number;
+
+  // Fraction of samples with |x| > 0.90.  Detects mic overload / saturation.
+  nearSaturationRatio:        number;
+
+  // Normalized autocorrelation at codec-frame-size lags. Low-confidence only.
+  codecFrameCorrelationScore: number;
+
+  // Likelihood labels
+  reverbTailLikelihood:       "none" | "low" | "medium" | "high";
+  resonanceLikelihood:        "none" | "low" | "medium" | "high";
+  pumpingLikelihood:          "none" | "low" | "medium" | "high";
+  saturationLikelihood:       "none" | "low" | "medium" | "high";
+  // Structurally capped at "low" — never "medium" or "high"
+  codecArtifactLikelihood:    "none" | "low";
+
+  dominantArtifactType:
+    | "reverb_tail"
+    | "pa_resonance"
+    | "pa_limiter_pump"
+    | "mic_saturation"
+    | "codec_artifact"
+    | "broadband_noise"
+    | "mixed"
+    | "clean";
+}
+
 // ─── Enhancement Result ───────────────────────────────────────────────────────
 
 export interface EnhancementReport {
@@ -114,6 +162,9 @@ export interface EnhancementReport {
   appliedPresenceBoostDb?:  number;
   appliedAirBoostDb?:       number;
   snrDbUsedForSafety?:      number;
+
+  // Read-only artifact classification from the input buffer (PR #20)
+  artifactDiagnostics?:     ArtifactDiagnostics;
 }
 
 export interface EnhancementResult {

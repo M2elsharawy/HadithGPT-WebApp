@@ -1,9 +1,10 @@
-import { AudioAnalyzer }     from "./AudioAnalyzer";
-import { DeReverbProcessor } from "./DeReverbProcessor";
-import { DynamicsProcessor }  from "./DynamicsProcessor";
-import { HumRemover }         from "./HumRemover";
-import { LoudnessNormalizer } from "./LoudnessNormalizer";
-import { NoiseReducer }       from "./NoiseReducer";
+import { AudioAnalyzer }               from "./AudioAnalyzer";
+import { ArtifactDiagnosticsAnalyzer } from "./ArtifactDiagnosticsAnalyzer";
+import { DeReverbProcessor }           from "./DeReverbProcessor";
+import { DynamicsProcessor }           from "./DynamicsProcessor";
+import { HumRemover }                  from "./HumRemover";
+import { LoudnessNormalizer }          from "./LoudnessNormalizer";
+import { NoiseReducer }                from "./NoiseReducer";
 import type { EnhancementOptions, EnhancementReport, EnhancementResult } from "./types";
 
 // ── Presence/air boost safety ─────────────────────────────────────────────────
@@ -82,7 +83,8 @@ export class AudioEnhancementEngine {
 
     // ── 1. Analyze input ──────────────────────────────────────────────────────
     progress(3, "جاري تحليل الصوت...");
-    const before = AudioAnalyzer.analyze(buffer);
+    const before              = AudioAnalyzer.analyze(buffer);
+    const artifactDiagnostics = ArtifactDiagnosticsAnalyzer.analyze(buffer);
 
     const appliedStages: string[] = [];
 
@@ -193,6 +195,7 @@ export class AudioEnhancementEngine {
       appliedPresenceBoostDb:   safeBoosts.adjusted ? safeBoosts.presenceBoostDb : undefined,
       appliedAirBoostDb:        safeBoosts.adjusted ? safeBoosts.airBoostDb      : undefined,
       snrDbUsedForSafety:       safeBoosts.adjusted ? before.snrDb               : undefined,
+      artifactDiagnostics,
     };
 
     progress(100, "اكتملت المعالجة ✓");
