@@ -24,7 +24,7 @@ export default function Home() {
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-sm">
               <span className="text-white text-sm">🎙</span>
             </div>
-            <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">معالج الصوت الذكي</span>
+            <span dir="ltr" className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-tight">SawtWave</span>
           </div>
           <div className="flex items-center gap-2">
             <a href="/app/tools"
@@ -33,7 +33,7 @@ export default function Home() {
             </a>
             <a href="/app/tools"
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-all shadow-sm active:scale-95">
-              ابدأ مجاناً
+              ابدأ الآن
               <ArrowLeft className="w-3.5 h-3.5"/>
             </a>
           </div>
@@ -51,29 +51,29 @@ export default function Home() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white leading-tight tracking-tight mb-4">
-            نظّف تسجيلاتك الصوتية<br/>
+            نظّف صوتك وحسّن تسجيلاتك<br/>
             <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
               في ثوانٍ
             </span>
           </h1>
 
           <p className="text-lg text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl mx-auto mb-8">
-            احذف الصمت، نظّف الجودة، صدّر للواتساب — بدون خبرة تقنية
+            احذف الصمت تلقائياً، قطّع وادمج الملفات، وصدّر للواتساب — بدون خبرة تقنية
           </p>
 
           {/* Primary CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
-            <a href="/guided"
-              className="flex items-center gap-2.5 px-8 py-3.5 bg-gradient-to-b from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 text-white font-bold rounded-2xl text-base transition-all shadow-lg shadow-violet-200 dark:shadow-none active:scale-[0.97]">
-              <span className="text-xl">🕌</span>
-              وضع الصلاة المبسّط
-            </a>
             <a href="/app/tools"
+              className="flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-base transition-all shadow-lg shadow-blue-200 dark:shadow-none active:scale-[0.97]">
+              <Zap className="w-4 h-4"/>
+              ابدأ الآن
+            </a>
+            <a href="#tools"
               className="flex items-center gap-2 px-8 py-3.5 border-2 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 text-slate-700 dark:text-slate-300 font-bold rounded-2xl text-base transition-all">
-              الأدوات الكاملة ←
+              استكشف الأدوات ←
             </a>
           </div>
-          <p className="text-xs text-slate-400">لا يتطلب تسجيل حساب · مجاني تماماً</p>
+          <p className="text-xs text-slate-400">لا تسجيل حساب · مجاني تماماً · يعمل بدون إنترنت</p>
         </div>
 
         {/* ── How it works ───────────────────────────────────────────────── */}
@@ -81,7 +81,7 @@ export default function Home() {
           <div className="grid grid-cols-3 gap-4 text-center">
             {[
               { step:"1", icon:"⬆", label:"ارفع الملف", sub:"MP3 أو WAV أو M4A" },
-              { step:"2", icon:"✨", label:"اختر العملية", sub:"إزالة صمت أو تقطيع" },
+              { step:"2", icon:"✨", label:"اختر الأداة", sub:"تقطيع أو إزالة صمت أو تحسين" },
               { step:"3", icon:"⬇", label:"حمّل النتيجة", sub:"MP3 جاهز للواتساب" },
             ].map(s => (
               <div key={s.step} className="relative">
@@ -95,11 +95,11 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── Features ───────────────────────────────────────────────────── */}
-        <div className="bg-slate-50 dark:bg-slate-900/50 border-t border-b border-slate-100 dark:border-slate-800 py-12">
+        {/* ── Features / Tools ───────────────────────────────────────────── */}
+        <div id="tools" className="bg-slate-50 dark:bg-slate-900/50 border-t border-b border-slate-100 dark:border-slate-800 py-12">
           <div className="max-w-3xl mx-auto px-5">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center mb-6">
-              الميزات
+              الأدوات
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
@@ -137,7 +137,7 @@ export default function Home() {
         {/* ── Final CTA ──────────────────────────────────────────────────── */}
         <div className="max-w-lg mx-auto px-5 py-14 text-center">
           <p className="text-2xl font-black text-slate-800 dark:text-slate-200 mb-2">جاهز للبدء؟</p>
-          <p className="text-slate-400 text-sm mb-6">لا تسجيل، لا دفع، لا إنترنت مطلوب</p>
+          <p className="text-slate-400 text-sm mb-6">لا تسجيل، لا دفع، لا انتظار</p>
           <a href="/app/tools"
             className="inline-flex items-center gap-2 px-10 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl text-base transition-all shadow-xl shadow-blue-200 dark:shadow-none active:scale-[0.97]">
             <Zap className="w-5 h-5"/>
@@ -149,7 +149,7 @@ export default function Home() {
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer className="border-t border-slate-100 dark:border-slate-800 py-5 text-center">
         <p className="text-xs text-slate-400">
-          معالج الصوت الذكي · يعمل في متصفحك · مجاني بالكامل
+          <span dir="ltr">SawtWave</span> · يعمل في متصفحك · مجاني بالكامل
         </p>
       </footer>
     </div>
