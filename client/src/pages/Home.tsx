@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
-import { Scissors, MicOff, Sliders, Layers, ShieldCheck, Cpu, ArrowLeft, Mic2, Zap } from "lucide-react";
+import { Scissors, MicOff, Sliders, Layers, ShieldCheck, ArrowLeft, Mic2, Zap } from "lucide-react";
 import { useEffect } from "react";
 import { CLIENT_ONLY_MODE } from "@/lib/clientMode";
 
@@ -15,24 +15,28 @@ export default function Home() {
   }, [isAuthenticated]);
 
   return (
-    <div dir="rtl" className="min-h-screen bg-white dark:bg-slate-950 flex flex-col selection:bg-blue-100">
+    <div dir="rtl" className="min-h-screen bg-white dark:bg-slate-950 flex flex-col selection:bg-[#0F7D86]/20">
 
       {/* ── Nav ─────────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800">
         <div className="max-w-5xl mx-auto flex items-center justify-between px-5 py-3.5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-[#0F7D86] flex items-center justify-center shadow-sm">
               <span className="text-white text-sm">🎙</span>
             </div>
             <span dir="ltr" className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-tight">SawtWave</span>
           </div>
           <div className="flex items-center gap-2">
-            <a href="/app/tools"
+            <a href="#steps"
+              className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors font-medium">
+              كيف يعمل
+            </a>
+            <a href="#tools"
               className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors font-medium">
               الأدوات
             </a>
             <a href="/app/tools"
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-all shadow-sm active:scale-95">
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#0F7D86] hover:bg-[#0B5A61] text-white text-sm font-bold rounded-xl transition-all shadow-sm active:scale-95">
               ابدأ الآن
               <ArrowLeft className="w-3.5 h-3.5"/>
             </a>
@@ -44,17 +48,13 @@ export default function Home() {
       <main className="flex-1">
         <div className="max-w-3xl mx-auto px-5 pt-16 pb-12 text-center">
 
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 rounded-full text-xs font-semibold text-blue-700 dark:text-blue-300 mb-6">
-            <Cpu className="w-3.5 h-3.5"/>
-            يعمل كلياً في متصفحك · لا رفع للسحابة · خصوصية تامة
-          </div>
+          {/* Eyebrow */}
+          <p className="text-sm font-semibold text-[#0F7D86] mb-6 tracking-wide">
+            أدوات صوتية في متصفحك
+          </p>
 
           <h1 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white leading-tight tracking-tight mb-4">
-            نظّف صوتك وحسّن تسجيلاتك<br/>
-            <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-              في ثوانٍ
-            </span>
+            ارفع. عدّل. احفظ.
           </h1>
 
           <p className="text-lg text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl mx-auto mb-8">
@@ -64,12 +64,12 @@ export default function Home() {
           {/* Primary CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
             <a href="/app/tools"
-              className="flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-base transition-all shadow-lg shadow-blue-200 dark:shadow-none active:scale-[0.97]">
+              className="flex items-center gap-2 px-8 py-3.5 bg-[#0F7D86] hover:bg-[#0B5A61] text-white font-bold rounded-2xl text-base transition-all shadow-lg shadow-[#0F7D86]/20 dark:shadow-none active:scale-[0.97]">
               <Zap className="w-4 h-4"/>
               ابدأ الآن
             </a>
             <a href="#tools"
-              className="flex items-center gap-2 px-8 py-3.5 border-2 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 text-slate-700 dark:text-slate-300 font-bold rounded-2xl text-base transition-all">
+              className="flex items-center gap-2 px-8 py-3.5 border-2 border-slate-200 dark:border-slate-700 hover:border-[#0F7D86] dark:hover:border-[#0F7D86] text-slate-700 dark:text-slate-300 font-bold rounded-2xl text-base transition-all">
               استكشف الأدوات ←
             </a>
           </div>
@@ -77,7 +77,7 @@ export default function Home() {
         </div>
 
         {/* ── How it works ───────────────────────────────────────────────── */}
-        <div className="max-w-3xl mx-auto px-5 pb-12">
+        <div id="steps" className="max-w-3xl mx-auto px-5 pb-12">
           <div className="grid grid-cols-3 gap-4 text-center">
             {[
               { step:"1", icon:"⬆", label:"ارفع الملف", sub:"MP3 أو WAV أو M4A" },
@@ -139,7 +139,7 @@ export default function Home() {
           <p className="text-2xl font-black text-slate-800 dark:text-slate-200 mb-2">جاهز للبدء؟</p>
           <p className="text-slate-400 text-sm mb-6">لا تسجيل، لا دفع، لا انتظار</p>
           <a href="/app/tools"
-            className="inline-flex items-center gap-2 px-10 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl text-base transition-all shadow-xl shadow-blue-200 dark:shadow-none active:scale-[0.97]">
+            className="inline-flex items-center gap-2 px-10 py-4 bg-[#0F7D86] hover:bg-[#0B5A61] text-white font-black rounded-2xl text-base transition-all shadow-xl shadow-[#0F7D86]/20 dark:shadow-none active:scale-[0.97]">
             <Zap className="w-5 h-5"/>
             ابدأ الآن — مجاناً
           </a>
