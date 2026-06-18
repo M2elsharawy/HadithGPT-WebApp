@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
-import { Scissors, MicOff, Sliders, Layers, ShieldCheck, ArrowLeft, Mic2, Zap } from "lucide-react";
+import { Scissors, MicOff, Sliders, Layers, ArrowLeft, Mic2, Zap } from "lucide-react";
 import { useEffect } from "react";
 import { CLIENT_ONLY_MODE } from "@/lib/clientMode";
 
@@ -98,38 +98,37 @@ export default function Home() {
         {/* ── Features / Tools ───────────────────────────────────────────── */}
         <div id="tools" className="bg-slate-50 dark:bg-slate-900/50 border-t border-b border-slate-100 dark:border-slate-800 py-12">
           <div className="max-w-3xl mx-auto px-5">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center mb-6">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center mb-2">
               الأدوات
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 text-center mb-6">
+              كل ما تحتاجه لتحرير الصوت
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { icon:<MicOff className="w-4 h-4"/>,   label:"إزالة الصمت التلقائية", sub:"ذكاء اصطناعي للصلاة",        color:"violet" },
-                { icon:<Scissors className="w-4 h-4"/>, label:"تقطيع يدوي دقيق",        sub:"موجة تفاعلية كاملة",         color:"blue"   },
-                { icon:<Sliders className="w-4 h-4"/>,  label:"تحسين الجودة",           sub:"معادل + وضوح + ضغط",         color:"amber"  },
-                { icon:<Layers className="w-4 h-4"/>,   label:"دمج ملفات",              sub:"ادمج تسجيلات عدة معاً",       color:"indigo" },
-                { icon:<Mic2 className="w-4 h-4"/>,     label:"استخراج النص",            sub:"نسخ التلاوة كتابةً",          color:"teal"   },
-                { icon:<ShieldCheck className="w-4 h-4"/>, label:"خصوصية 100%",          sub:"لا شيء يغادر جهازك",         color:"emerald"},
-              ].map(f => {
-                const cls: Record<string,string> = {
-                  violet: "bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400",
-                  blue:   "bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400",
-                  amber:  "bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400",
-                  indigo: "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400",
-                  teal:   "bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400",
-                  emerald:"bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400",
-                };
-                return (
-                  <div key={f.label} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 flex items-start gap-3">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${cls[f.color]}`}>
-                      {f.icon}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">{f.label}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{f.sub}</p>
-                    </div>
+                { icon:<Scissors className="w-5 h-5"/>, label:"تقطيع الصوت",  tag:false, desc:"قص المقاطع بدقة واحفظ الجزء الذي تحتاجه فقط." },
+                { icon:<MicOff   className="w-5 h-5"/>, label:"إزالة الصمت",  tag:false, desc:"قلل الفواصل الطويلة تلقائيًا مع الحفاظ على الكلام." },
+                { icon:<Layers   className="w-5 h-5"/>, label:"دمج الملفات",  tag:false, desc:"اجمع أكثر من ملف صوتي في ملف واحد بسهولة." },
+                { icon:<Sliders  className="w-5 h-5"/>, label:"تحسين الصوت", tag:true,  desc:"حسّن الوضوح وقلّل بعض الضوضاء حسب جودة التسجيل." },
+                { icon:<Mic2     className="w-5 h-5"/>, label:"استخراج النص", tag:false, desc:"استخرج نصًا قابلًا للمراجعة من الكلام الواضح في الملف الصوتي." },
+              ].map(f => (
+                <div key={f.label} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex flex-col gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#E3EEEE] dark:bg-[#0F7D86]/10 text-[#0F7D86] flex items-center justify-center flex-shrink-0">
+                    {f.icon}
                   </div>
-                );
-              })}
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight flex items-center gap-2">
+                      {f.label}
+                      {f.tag && <span className="text-[10px] font-mono uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-400 rounded px-1.5 py-0.5">تجريبي</span>}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{f.desc}</p>
+                  </div>
+                  <a href="/app/tools" className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F7D86] mt-auto">
+                    استخدم الأداة
+                    <ArrowLeft className="w-3 h-3"/>
+                  </a>
+                </div>
+              ))}
             </div>
           </div>
         </div>
