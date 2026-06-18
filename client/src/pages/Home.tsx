@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
-import { Scissors, MicOff, Sliders, Layers, ArrowLeft, Mic2, Zap, Info, Upload, Download } from "lucide-react";
+import { Scissors, MicOff, Sliders, Layers, ArrowLeft, Mic2, Zap, Info, Upload, Download, Globe, CheckCircle } from "lucide-react";
 import { useEffect } from "react";
 import { CLIENT_ONLY_MODE } from "@/lib/clientMode";
 
@@ -128,6 +128,27 @@ export default function Home() {
                     استخدم الأداة
                     <ArrowLeft className="w-3 h-3"/>
                   </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Why SawtWave ──────────────────────────────────────────────── */}
+        <div id="why" className="bg-[#0C2E33] py-12">
+          <div className="max-w-3xl mx-auto px-5">
+            <p className="text-xs font-bold text-[#5FA9B1] uppercase tracking-widest text-center mb-2">لماذا SawtWave؟</p>
+            <h2 className="text-xl font-bold text-[#F0F7F7] text-center mb-6">بسيط. سريع. في متصفحك.</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { icon:<Globe       className="w-6 h-6"/>, label:"يعمل في المتصفح مباشرة", desc:"بدون تثبيت أو برامج إضافية. افتح الصفحة وابدأ فورًا." },
+                { icon:<CheckCircle className="w-6 h-6"/>, label:"بسيط وواضح",              desc:"واجهة مريحة بخطوات قليلة وكلمات مفهومة. لا خبرة تقنية مطلوبة." },
+                { icon:<Zap         className="w-6 h-6"/>, label:"سريع وخفيف",              desc:"أدوات مباشرة تنجز المهمة بسرعة وتحترم وقتك وجهازك." },
+              ].map(w => (
+                <div key={w.label} className="bg-white/[.03] border border-white/10 rounded-2xl p-7 flex flex-col gap-3">
+                  <div className="text-[#5FA9B1]">{w.icon}</div>
+                  <p className="font-bold text-[#EEF7F7] text-sm leading-tight">{w.label}</p>
+                  <p className="text-xs text-[#7AABAD] leading-relaxed">{w.desc}</p>
                 </div>
               ))}
             </div>
