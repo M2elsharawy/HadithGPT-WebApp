@@ -60,7 +60,7 @@ export default function Home() {
               استكشف الأدوات ←
             </a>
           </div>
-          <p className="text-xs text-slate-400">لا تسجيل حساب · مجاني تماماً · يعمل بدون إنترنت</p>
+          <p className="text-xs text-slate-400">لا تسجيل حساب · مجاني تماماً · مباشرة في متصفحك</p>
         </div>
 
         {/* ── How it works ───────────────────────────────────────────────── */}
