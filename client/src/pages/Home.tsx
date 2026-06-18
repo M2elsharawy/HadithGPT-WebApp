@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
-import { Scissors, MicOff, Sliders, Layers, ArrowLeft, Mic2, Zap, Info } from "lucide-react";
+import { Scissors, MicOff, Sliders, Layers, ArrowLeft, Mic2, Zap, Info, Upload, Download } from "lucide-react";
 import { useEffect } from "react";
 import { CLIENT_ONLY_MODE } from "@/lib/clientMode";
 
@@ -78,18 +78,19 @@ export default function Home() {
 
         {/* ── How it works ───────────────────────────────────────────────── */}
         <div id="steps" className="max-w-3xl mx-auto px-5 pb-12">
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center mb-2">كيف يعمل</p>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 text-center mb-6">ثلاث خطوات بسيطة</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { step:"1", icon:"⬆", label:"ارفع الملف", sub:"MP3 أو WAV أو M4A" },
-              { step:"2", icon:"✨", label:"اختر الأداة", sub:"تقطيع أو إزالة صمت أو تحسين" },
-              { step:"3", icon:"⬇", label:"حمّل النتيجة", sub:"MP3 جاهز للواتساب" },
+              { step:"01", icon:<Upload   className="w-10 h-10"/>, label:"ارفع",  desc:"اسحب ملفك الصوتي أو اختره من جهازك. يبدأ التحرير مباشرة في المتصفح." },
+              { step:"02", icon:<Sliders  className="w-10 h-10"/>, label:"عدّل",  desc:"قص، أزل الصمت، ادمج، أو حسّن الوضوح بخطوات واضحة وبدون تعقيد." },
+              { step:"03", icon:<Download className="w-10 h-10"/>, label:"احفظ",  desc:"حمّل ملفك الجاهز بعد المعالجة، واحتفظ بالنسخة المناسبة لاستخدامك." },
             ].map(s => (
-              <div key={s.step} className="relative">
-                <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl mx-auto mb-3">
-                  {s.icon}
-                </div>
-                <p className="font-bold text-slate-800 dark:text-slate-200 text-sm mb-0.5">{s.label}</p>
-                <p className="text-xs text-slate-400">{s.sub}</p>
+              <div key={s.step} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-7 text-center flex flex-col items-center gap-3">
+                <span className="text-xs font-mono text-[#0F7D86] tracking-widest uppercase">{s.step}</span>
+                <div className="text-[#0F7D86]">{s.icon}</div>
+                <p className="font-bold text-slate-800 dark:text-slate-200 text-base">{s.label}</p>
+                <p className="text-xs text-slate-400 leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
