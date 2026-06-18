@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
-import { Scissors, MicOff, Sliders, Layers, ArrowLeft, Mic2, Zap } from "lucide-react";
+import { Scissors, MicOff, Sliders, Layers, ArrowLeft, Mic2, Zap, Info } from "lucide-react";
 import { useEffect } from "react";
 import { CLIENT_ONLY_MODE } from "@/lib/clientMode";
 
@@ -129,6 +129,19 @@ export default function Home() {
                   </a>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Honest Note ──────────────────────────────────────────────── */}
+        <div className="max-w-3xl mx-auto px-5 py-10">
+          <div className="flex gap-4 items-start bg-[#FBF7EE] border border-[#D8CAAA] rounded-2xl px-6 py-5 max-w-2xl mx-auto">
+            <Info className="w-6 h-6 text-[#C79A4E] flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-[#4A3810] mb-1.5">ملاحظة حول تحسين الصوت</p>
+              <p className="text-sm text-[#6B5030] leading-relaxed">
+                تعتمد جودة التحسين على جودة التسجيل الأصلي. تساعد الأداة على تحسين الوضوح وتقليل بعض الضوضاء، لكنها لا تَعِد بجودة استوديو ولا بإزالة كاملة للضوضاء.
+              </p>
             </div>
           </div>
         </div>
