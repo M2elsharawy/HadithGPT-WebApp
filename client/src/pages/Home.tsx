@@ -15,11 +15,11 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2">
             <a href="#steps"
-              className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors font-medium">
+              className="hidden sm:block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors font-medium">
               كيف يعمل
             </a>
             <a href="#tools"
-              className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors font-medium">
+              className="hidden sm:block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors font-medium">
               الأدوات
             </a>
             <a href="/app/tools"
