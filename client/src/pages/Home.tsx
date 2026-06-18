@@ -169,22 +169,32 @@ export default function Home() {
         </div>
 
         {/* ── Final CTA ──────────────────────────────────────────────────── */}
-        <div className="max-w-lg mx-auto px-5 py-14 text-center">
-          <p className="text-2xl font-black text-slate-800 dark:text-slate-200 mb-2">جاهز للبدء؟</p>
-          <p className="text-slate-400 text-sm mb-6">لا تسجيل، لا دفع، لا انتظار</p>
-          <a href="/app/tools"
-            className="inline-flex items-center gap-2 px-10 py-4 bg-[#0F7D86] hover:bg-[#0B5A61] text-white font-black rounded-2xl text-base transition-all shadow-xl shadow-[#0F7D86]/20 dark:shadow-none active:scale-[0.97]">
-            <Zap className="w-5 h-5"/>
-            ابدأ الآن — مجاناً
-          </a>
+        <div className="bg-[#0C2E33] py-16 text-center">
+          <div className="max-w-lg mx-auto px-5">
+            <p className="text-2xl font-black text-[#F0F7F7] mb-3">جاهز لتجربة SawtWave؟</p>
+            <p className="text-sm text-[#7AABAD] mb-8">ابدأ بأدوات بسيطة لتحرير الصوت من المتصفح، بدون تعقيد.</p>
+            <a href="/app/tools"
+              className="inline-flex items-center gap-2 px-10 py-4 bg-[#EFF7F7] hover:bg-white text-[#0C2E33] font-black rounded-2xl text-base transition-all active:scale-[0.97]">
+              <Zap className="w-5 h-5"/>
+              ابدأ الآن
+            </a>
+          </div>
         </div>
       </main>
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="border-t border-slate-100 dark:border-slate-800 py-5 text-center">
-        <p className="text-xs text-slate-400">
-          <span dir="ltr">SawtWave</span> · يعمل في متصفحك · مجاني بالكامل
-        </p>
+      <footer className="bg-[#0C2E33] border-t border-white/[.07] py-8">
+        <div className="max-w-3xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col items-center sm:items-start gap-1">
+            <span dir="ltr" className="font-bold text-[#EEF7F7] text-sm tracking-tight">SawtWave</span>
+            <p className="text-xs text-[#5B8E8F]">أدوات صوتية بسيطة في متصفحك.</p>
+          </div>
+          <div className="flex items-center gap-5 flex-wrap justify-center">
+            <a href="#steps" className="text-xs text-[#5B8E8F] hover:text-[#EEF7F7] transition-colors">كيف يعمل</a>
+            <a href="#tools"  className="text-xs text-[#5B8E8F] hover:text-[#EEF7F7] transition-colors">الأدوات</a>
+            <a href="#why"    className="text-xs text-[#5B8E8F] hover:text-[#EEF7F7] transition-colors">لماذا SawtWave</a>
+          </div>
+        </div>
       </footer>
     </div>
   );
