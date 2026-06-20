@@ -1,9 +1,11 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { useEffect } from "react";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useAuth } from "./_core/hooks/useAuth";
 import Home from "./pages/Home";
 import DashboardLayout from "./components/DashboardLayout";
 import Tools from "./pages/Tools";
@@ -14,9 +16,7 @@ import GuidedWorkflow from "./pages/GuidedWorkflow";
 function Router() {
   return (
     <Switch>
-      {/* الصفحة الرئيسية — تُعيد التوجيه لـ /app/tools للمستخدمين المسجلين */}
       <Route path={"/"} component={Home} />
-      {/* GuidedWorkflow متاح كمسار اختياري */}
       <Route path={"/guided"} component={GuidedWorkflow} />
       <Route path={"/app/*"} component={AppRoutes} />
       <Route path={"/404"} component={NotFound} />
@@ -26,6 +26,15 @@ function Router() {
 }
 
 function AppRoutes() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) navigate("/");
+  }, [isAuthenticated, isLoading]);
+
+  if (isLoading || !isAuthenticated) return null;
+
   return (
     <DashboardLayout>
       <Switch>

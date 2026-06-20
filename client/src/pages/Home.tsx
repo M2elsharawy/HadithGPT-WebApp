@@ -1,5 +1,25 @@
 import { Scissors, MicOff, Sliders, Layers, ArrowLeft, Mic2, Zap, Info, Upload, Download, Globe, CheckCircle } from "lucide-react";
 
+const STEPS = [
+  { step: "01", icon: <Upload   className="w-10 h-10" />, label: "ارفع",  desc: "اسحب ملفك الصوتي أو اختره من جهازك. يبدأ التحرير مباشرة في المتصفح." },
+  { step: "02", icon: <Sliders  className="w-10 h-10" />, label: "عدّل",  desc: "قص، أزل الصمت، ادمج، أو حسّن الوضوح بخطوات واضحة وبدون تعقيد." },
+  { step: "03", icon: <Download className="w-10 h-10" />, label: "احفظ",  desc: "حمّل ملفك الجاهز بعد المعالجة، واحتفظ بالنسخة المناسبة لاستخدامك." },
+];
+
+const TOOLS = [
+  { icon: <Scissors className="w-5 h-5" />, label: "تقطيع الصوت",  desc: "قص المقاطع بدقة واحفظ الجزء الذي تحتاجه فقط." },
+  { icon: <MicOff   className="w-5 h-5" />, label: "إزالة الصمت",  desc: "قلل الفواصل الطويلة تلقائيًا مع الحفاظ على الكلام." },
+  { icon: <Layers   className="w-5 h-5" />, label: "دمج الملفات",  desc: "اجمع أكثر من ملف صوتي في ملف واحد بسهولة." },
+  { icon: <Sliders  className="w-5 h-5" />, label: "تحسين الصوت",  tag: true, desc: "حسّن الوضوح وقلّل بعض الضوضاء حسب جودة التسجيل." },
+  { icon: <Mic2     className="w-5 h-5" />, label: "استخراج النص", desc: "استخرج نصًا من الكلام الواضح. يتطلب Chrome أو Edge واتصالاً بالإنترنت." },
+];
+
+const WHY = [
+  { icon: <Globe       className="w-6 h-6" />, label: "يعمل في المتصفح مباشرة", desc: "بدون تثبيت أو برامج إضافية. افتح الصفحة وابدأ فورًا." },
+  { icon: <CheckCircle className="w-6 h-6" />, label: "بسيط وواضح",              desc: "واجهة مريحة بخطوات قليلة وكلمات مفهومة. لا خبرة تقنية مطلوبة." },
+  { icon: <Zap         className="w-6 h-6" />, label: "سريع وخفيف",              desc: "أدوات مباشرة تنجز المهمة بسرعة وتحترم وقتك وجهازك." },
+];
+
 export default function Home() {
   return (
     <div dir="rtl" className="min-h-screen bg-white dark:bg-slate-950 flex flex-col selection:bg-[#0F7D86]/20">
@@ -35,7 +55,6 @@ export default function Home() {
       <main className="flex-1">
         <div className="max-w-3xl mx-auto px-5 pt-16 pb-12 text-center">
 
-          {/* Eyebrow */}
           <p className="text-sm font-semibold text-[#0F7D86] mb-6 tracking-wide">
             أدوات صوتية في متصفحك
           </p>
@@ -48,7 +67,6 @@ export default function Home() {
             احذف الصمت تلقائياً، قطّع وادمج الملفات، وصدّر للواتساب — بدون خبرة تقنية
           </p>
 
-          {/* Primary CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
             <a href="/app/tools"
               className="flex items-center gap-2 px-8 py-3.5 bg-[#0F7D86] hover:bg-[#0B5A61] text-white font-bold rounded-2xl text-base transition-all shadow-lg shadow-[#0F7D86]/20 dark:shadow-none active:scale-[0.97]">
@@ -57,10 +75,10 @@ export default function Home() {
             </a>
             <a href="#tools"
               className="flex items-center gap-2 px-8 py-3.5 border-2 border-slate-200 dark:border-slate-700 hover:border-[#0F7D86] dark:hover:border-[#0F7D86] text-slate-700 dark:text-slate-300 font-bold rounded-2xl text-base transition-all">
-              استكشف الأدوات ←
+              استكشف الأدوات ↓
             </a>
           </div>
-          <p className="text-xs text-slate-400">لا تسجيل حساب · مجاني تماماً · مباشرة في متصفحك</p>
+          <p className="text-xs text-slate-400">لا تسجيل حساب · مجاني تماماً · لا تثبيت مطلوب</p>
         </div>
 
         {/* ── How it works ───────────────────────────────────────────────── */}
@@ -68,11 +86,7 @@ export default function Home() {
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center mb-2">كيف يعمل</p>
           <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 text-center mb-6">ثلاث خطوات بسيطة</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { step:"01", icon:<Upload   className="w-10 h-10"/>, label:"ارفع",  desc:"اسحب ملفك الصوتي أو اختره من جهازك. يبدأ التحرير مباشرة في المتصفح." },
-              { step:"02", icon:<Sliders  className="w-10 h-10"/>, label:"عدّل",  desc:"قص، أزل الصمت، ادمج، أو حسّن الوضوح بخطوات واضحة وبدون تعقيد." },
-              { step:"03", icon:<Download className="w-10 h-10"/>, label:"احفظ",  desc:"حمّل ملفك الجاهز بعد المعالجة، واحتفظ بالنسخة المناسبة لاستخدامك." },
-            ].map(s => (
+            {STEPS.map(s => (
               <div key={s.step} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-7 text-center flex flex-col items-center gap-3">
                 <span className="text-xs font-mono text-[#0F7D86] tracking-widest uppercase">{s.step}</span>
                 <div className="text-[#0F7D86]">{s.icon}</div>
@@ -93,14 +107,11 @@ export default function Home() {
               كل ما تحتاجه لتحرير الصوت
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { icon:<Scissors className="w-5 h-5"/>, label:"تقطيع الصوت",  tag:false, desc:"قص المقاطع بدقة واحفظ الجزء الذي تحتاجه فقط." },
-                { icon:<MicOff   className="w-5 h-5"/>, label:"إزالة الصمت",  tag:false, desc:"قلل الفواصل الطويلة تلقائيًا مع الحفاظ على الكلام." },
-                { icon:<Layers   className="w-5 h-5"/>, label:"دمج الملفات",  tag:false, desc:"اجمع أكثر من ملف صوتي في ملف واحد بسهولة." },
-                { icon:<Sliders  className="w-5 h-5"/>, label:"تحسين الصوت", tag:true,  desc:"حسّن الوضوح وقلّل بعض الضوضاء حسب جودة التسجيل." },
-                { icon:<Mic2     className="w-5 h-5"/>, label:"استخراج النص", tag:false, desc:"استخرج نصًا قابلًا للمراجعة من الكلام الواضح في الملف الصوتي." },
-              ].map(f => (
-                <div key={f.label} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex flex-col gap-3">
+              {TOOLS.map((f, i) => (
+                <div
+                  key={f.label}
+                  className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex flex-col gap-3${i === TOOLS.length - 1 && TOOLS.length % 2 !== 0 ? " sm:col-span-2 sm:max-w-sm sm:mx-auto sm:w-full" : ""}`}
+                >
                   <div className="w-10 h-10 rounded-xl bg-[#E3EEEE] dark:bg-[#0F7D86]/10 text-[#0F7D86] flex items-center justify-center flex-shrink-0">
                     {f.icon}
                   </div>
@@ -127,11 +138,7 @@ export default function Home() {
             <p className="text-xs font-bold text-[#5FA9B1] uppercase tracking-widest text-center mb-2">لماذا SawtWave؟</p>
             <h2 className="text-xl font-bold text-[#F0F7F7] text-center mb-6">بسيط. سريع. في متصفحك.</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                { icon:<Globe       className="w-6 h-6"/>, label:"يعمل في المتصفح مباشرة", desc:"بدون تثبيت أو برامج إضافية. افتح الصفحة وابدأ فورًا." },
-                { icon:<CheckCircle className="w-6 h-6"/>, label:"بسيط وواضح",              desc:"واجهة مريحة بخطوات قليلة وكلمات مفهومة. لا خبرة تقنية مطلوبة." },
-                { icon:<Zap         className="w-6 h-6"/>, label:"سريع وخفيف",              desc:"أدوات مباشرة تنجز المهمة بسرعة وتحترم وقتك وجهازك." },
-              ].map(w => (
+              {WHY.map(w => (
                 <div key={w.label} className="bg-white/[.03] border border-white/10 rounded-2xl p-7 flex flex-col gap-3">
                   <div className="text-[#5FA9B1]">{w.icon}</div>
                   <p className="font-bold text-[#EEF7F7] text-sm leading-tight">{w.label}</p>
