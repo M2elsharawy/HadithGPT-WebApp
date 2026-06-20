@@ -3227,7 +3227,7 @@ export default function Tools() {
           <div className={wrapClass}>
             <SectionHeader
               title="استخراج النص من الصوت"
-              subtitle="يعمل محلياً في المتصفح — Chrome أو Edge فقط"
+              subtitle="يتطلب Chrome أو Edge واتصالاً بالإنترنت"
             />
 
             {/* Language selector */}
