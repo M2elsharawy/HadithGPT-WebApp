@@ -1002,6 +1002,9 @@ export default function Tools() {
       setPreviewMode('enhanced');
       setActiveAudio(url, name);
       setEnhancementReport(workerResult.report);
+      if (workerResult.report.artifactDiagnostics) {
+        console.debug("[ArtifactDiagnostics]", workerResult.report.artifactDiagnostics);
+      }
       const fx = new Set(activeEffects); fx.add("تحسين متكامل");
       setActiveEffects(fx);
       toast.success("✓ تم تطبيق التحسين المتكامل — استخدم 'مقارنة' للمقارنة مع الأصلي");
