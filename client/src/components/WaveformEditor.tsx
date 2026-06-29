@@ -1135,12 +1135,12 @@ export default function WaveformEditor({
       <div className="flex items-center gap-1.5 flex-wrap">
         <span className="text-xs text-slate-500 flex-shrink-0">تكبير:</span>
         <button onClick={zoomIn}
-          className="p-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
-          <ZoomIn className="w-3.5 h-3.5"/>
+          className="p-2.5 sm:p-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
+          <ZoomIn className="w-4 h-4 sm:w-3.5 sm:h-3.5"/>
         </button>
         <button onClick={zoomOut}
-          className="p-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
-          <ZoomOut className="w-3.5 h-3.5"/>
+          className="p-2.5 sm:p-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
+          <ZoomOut className="w-4 h-4 sm:w-3.5 sm:h-3.5"/>
         </button>
         <button onClick={zoomFit}
           className="px-2 py-1 text-xs rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
