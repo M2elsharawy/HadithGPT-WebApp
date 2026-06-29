@@ -376,20 +376,20 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
         </div>
 
         {/* Progress bar */}
-        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1">
+        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
           <div
-            className="bg-blue-500 h-1 rounded-full transition-all duration-100"
+            className="bg-blue-500 h-2 rounded-full transition-all duration-100"
             style={{ width: `${progress * 100}%` }}
           />
         </div>
 
         {/* Controls row */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Restart */}
           <button
             onClick={handleRestart}
             disabled={isLoading || loadError || duration === 0}
-            className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-slate-300
+            className="p-3 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-slate-300
                        hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors"
             title="العودة للبداية"
           >
@@ -400,15 +400,15 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
           <button
             onClick={handlePlayPause}
             disabled={isLoading || loadError}
-            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white
+            className="w-11 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white
                        flex items-center justify-center disabled:opacity-40 transition-colors shadow-sm"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : isPlaying ? (
-              <Pause className="w-4 h-4" />
+              <Pause className="w-5 h-5" />
             ) : (
-              <Play className="w-4 h-4 ml-0.5" />
+              <Play className="w-5 h-5 ml-0.5" />
             )}
           </button>
 
@@ -416,7 +416,7 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
           <button
             onClick={handleMuteToggle}
             disabled={isLoading}
-            className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-slate-300
+            className="p-3 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-slate-300
                        hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors"
           >
             {isMuted || volume === 0
@@ -429,7 +429,7 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
             value={isMuted ? 0 : volume}
             onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
             disabled={isLoading}
-            className="w-24 accent-blue-500 disabled:opacity-40"
+            className="w-20 sm:w-24 accent-blue-500 disabled:opacity-40"
           />
           <span className="text-xs text-slate-400 w-8">
             {Math.round((isMuted ? 0 : volume) * 100)}%

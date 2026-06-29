@@ -2108,7 +2108,7 @@ export default function Tools() {
                   {SILENCE_THEMES.map(t => (
                     <button key={t.id} onClick={() => setSilenceThemeId(t.id as SilenceThemeId)}
                       title={t.id}
-                      className={`w-4 h-4 rounded-full border-2 transition-all ${silenceThemeId===t.id?"border-slate-500 dark:border-slate-300 scale-110":"border-transparent hover:scale-105"}`}
+                      className={`w-7 h-7 sm:w-4 sm:h-4 rounded-full border-2 transition-all ${silenceThemeId===t.id?"border-slate-500 dark:border-slate-300 scale-110":"border-transparent hover:scale-105"}`}
                       style={{ background: t.wave }}/>
                   ))}
                 </div>
@@ -2143,6 +2143,23 @@ export default function Tools() {
                     <div>
                       <p className="text-sm font-bold text-slate-800 dark:text-slate-200">صلاة</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">يحذف الأركان تلقائياً بدون مراجعة</p>
+                    </div>
+                  </button>
+
+                  {/* وضع ذكي */}
+                  <button onClick={() => {
+                    setSilenceMode("smart");
+                    toast.success("✓ وضع الصلاة الذكي — يحذف الأركان والتكبيرات تلقائياً");
+                  }}
+                    className={`flex flex-col gap-2 p-4 rounded-2xl border-2 text-right transition-all hover:scale-[1.02] ${
+                      silenceMode === "smart"
+                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950/60"
+                        : "border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 bg-white dark:bg-slate-900"
+                    }`}>
+                    <span className="text-2xl">✨</span>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">ذكي</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">يحذف الأركان والتكبيرات ويبقي التلاوة</p>
                     </div>
                   </button>
 
@@ -3371,7 +3388,7 @@ export default function Tools() {
         className="hidden"
         onChange={e => { handleFileSelect(e.target.files); e.target.value = ""; }}
       />
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 py-3 sm:py-8 space-y-6">
 
         {/* ── Guided Mode Banner ──────────────────────────────────────────── */}
         <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-800/60 rounded-2xl px-4 py-2.5">
@@ -3677,13 +3694,13 @@ export default function Tools() {
                     {/* × close */}
                     <button
                       onClick={() => setActiveTool(null)}
-                      className="w-7 h-7 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                      className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                       title="إغلاق"
                     >
                       <X className="w-4 h-4"/>
                     </button>
                   </div>
-                  <div className="p-5">
+                  <div className="p-3 sm:p-5">
                     {renderWorkspace()}
                   </div>
                 </div>

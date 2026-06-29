@@ -711,7 +711,7 @@ export default function TrimPanel({
             <p className="text-xs text-blue-700 dark:text-blue-300">
               اسحب لتحديد جزء · ظهر شريط الإجراءات فوق التحديد مباشرةً
             </p>
-            <span className="text-xs text-blue-400 font-mono">Alt = ⊘ snap</span>
+            <span className="hidden lg:inline text-xs text-blue-400 font-mono">Alt = ⊘ snap</span>
           </div>
           {loadState === "loading" && (
             <div className="h-28 flex items-center justify-center gap-2 text-slate-400">
@@ -780,8 +780,8 @@ export default function TrimPanel({
           )}
         </div>
 
-        {/* ── Hint + shortcuts ──────────────────────────────────────────── */}
-        <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/20">
+        {/* ── Hint + shortcuts — desktop only ──────────────────────────── */}
+        <div className="hidden sm:block px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/20">
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400 justify-center">
             {[
               ["Space","تشغيل"], ["S","بداية"], ["E","نهاية"],
@@ -806,7 +806,7 @@ export default function TrimPanel({
               <button type="button" onClick={() => { if(ready) { addMarker(playerTime); toast.success(`🔖 ${fmt(playerTime)}`); }}}
                 disabled={!ready}
                 aria-label="إضافة علامة عند الموضع الحالي"
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-yellow-400 hover:text-yellow-600 dark:hover:text-yellow-400 disabled:opacity-40 transition-all">
+                className="flex items-center gap-1 px-2.5 py-2.5 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-yellow-400 hover:text-yellow-600 dark:hover:text-yellow-400 disabled:opacity-40 transition-all">
                 🔖 علامة
               </button>
             </TooltipTrigger>
@@ -819,7 +819,7 @@ export default function TrimPanel({
               <button type="button" onClick={() => { if(loopEnabled){stopLoop();}else if(selStart<selEnd){setLoopEnabled(true);startLoop(selStart,selEnd);}else toast.error("حدد مقطعاً أولاً لتشغيله بتكرار"); }}
                 disabled={!ready}
                 aria-label="تشغيل المقطع المحدد بتكرار"
-                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-xl border transition-all disabled:opacity-40 ${loopEnabled?"bg-violet-100 dark:bg-violet-950 border-violet-400 text-violet-700 dark:text-violet-300":"border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-violet-400 hover:text-violet-600"}`}>
+                className={`flex items-center gap-1 px-2.5 py-2.5 text-xs font-medium rounded-xl border transition-all disabled:opacity-40 ${loopEnabled?"bg-violet-100 dark:bg-violet-950 border-violet-400 text-violet-700 dark:text-violet-300":"border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-violet-400 hover:text-violet-600"}`}>
                 {loopEnabled ? "⟳ ●" : "⟳ تكرار"}
               </button>
             </TooltipTrigger>
@@ -832,7 +832,7 @@ export default function TrimPanel({
               <button type="button" onClick={() => { if(selStart<selEnd) setWaveZoom({s:selStart,e:selEnd}); else toast.error("حدد مقطعاً أولاً للتكبير عليه"); }}
                 disabled={!ready}
                 aria-label="تكبير الموجة على الجزء المحدد"
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-sky-400 hover:text-sky-600 disabled:opacity-40 transition-all">
+                className="flex items-center gap-1 px-2.5 py-2.5 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-sky-400 hover:text-sky-600 disabled:opacity-40 transition-all">
                 🔍 تكبير
               </button>
             </TooltipTrigger>
@@ -844,7 +844,7 @@ export default function TrimPanel({
             <TooltipTrigger asChild>
               <button type="button" onClick={handleSplit} disabled={!ready}
                 aria-label="فصل التسجيل عند موضع التشغيل الحالي"
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-orange-400 hover:text-orange-600 disabled:opacity-40 transition-all">
+                className="flex items-center gap-1 px-2.5 py-2.5 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-orange-400 hover:text-orange-600 disabled:opacity-40 transition-all">
                 ✂ فصل
               </button>
             </TooltipTrigger>
@@ -856,7 +856,7 @@ export default function TrimPanel({
             <TooltipTrigger asChild>
               <button type="button" onClick={handleNormalize} disabled={!ready||isNormalizing}
                 aria-label="رفع مستوى الصوت تلقائياً بدون تشويه"
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 disabled:opacity-40 transition-all">
+                className="flex items-center gap-1 px-2.5 py-2.5 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 disabled:opacity-40 transition-all">
                 {isNormalizing ? "..." : "📊 تطبيع"}
               </button>
             </TooltipTrigger>
@@ -869,7 +869,7 @@ export default function TrimPanel({
               <TooltipTrigger asChild>
                 <button type="button" onClick={() => handleSilenceJump(-1)} disabled={!ready}
                   aria-label="الانتقال إلى فترة الصمت السابقة"
-                  className="px-2 py-1.5 text-xs font-bold rounded-r-none rounded-xl border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-all">◀ صمت</button>
+                  className="px-2 py-2.5 text-xs font-bold rounded-r-none rounded-xl border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-all">◀ صمت</button>
               </TooltipTrigger>
               <TooltipContent>الانتقال إلى فترة الصمت السابقة</TooltipContent>
             </Tooltip>
@@ -877,7 +877,7 @@ export default function TrimPanel({
               <TooltipTrigger asChild>
                 <button type="button" onClick={() => handleSilenceJump(1)} disabled={!ready}
                   aria-label="الانتقال إلى فترة الصمت التالية"
-                  className="px-2 py-1.5 text-xs font-bold rounded-l-none rounded-xl border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 border-r-0">صمت ▶</button>
+                  className="px-2 py-2.5 text-xs font-bold rounded-l-none rounded-xl border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 border-r-0">صمت ▶</button>
               </TooltipTrigger>
               <TooltipContent>الانتقال إلى فترة الصمت التالية</TooltipContent>
             </Tooltip>
@@ -886,7 +886,7 @@ export default function TrimPanel({
           {/* Region export */}
           {markers.length > 0 && (
             <button onClick={handleRegionExport} disabled={!ready}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-xl border border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 disabled:opacity-40 transition-all">
+              className="flex items-center gap-1 px-2.5 py-2.5 text-xs font-medium rounded-xl border border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 disabled:opacity-40 transition-all">
               ⬇ تصدير مناطق
             </button>
           )}
@@ -894,7 +894,7 @@ export default function TrimPanel({
           {/* Marker CSV export */}
           {markers.length > 0 && (
             <button onClick={exportMarkers}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-600 text-slate-500 hover:border-emerald-400 hover:text-emerald-600 transition-all">
+              className="flex items-center gap-1 px-2.5 py-2.5 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-600 text-slate-500 hover:border-emerald-400 hover:text-emerald-600 transition-all">
               ⬇ CSV
             </button>
           )}
@@ -908,7 +908,7 @@ export default function TrimPanel({
             <span className="text-xs text-slate-400 ml-1">سرعة:</span>
             {SPEED_SIMPLE.map(s => (
               <button key={s.value} type="button" onClick={() => setPlaybackRate(s.value)}
-                className={`px-2.5 py-1 text-xs rounded-lg transition-all ${
+                className={`px-2.5 py-2 text-xs rounded-lg transition-all ${
                   playbackRate === s.value
                     ? "bg-blue-600 text-white shadow-sm"
                     : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200"
@@ -922,7 +922,7 @@ export default function TrimPanel({
 
           {/* Crossfade — toggle */}
           <button type="button" onClick={toggleSmooth}
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg border transition-all ${
+            className={`flex items-center gap-1.5 px-2.5 py-2 text-xs rounded-lg border transition-all ${
               smoothTransition
                 ? "bg-orange-50 dark:bg-orange-950/30 border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-400"
                 : "border-slate-200 dark:border-slate-700 text-slate-500 hover:border-orange-300"
@@ -968,7 +968,7 @@ export default function TrimPanel({
                     {THEMES.map(t => (
                       <button key={t.id} type="button" onClick={() => setThemeId(t.id)}
                         title={t.label}
-                        className={`w-6 h-6 rounded-full border-2 transition-all ${themeId===t.id?"border-slate-600 dark:border-slate-300 scale-110":"border-transparent hover:scale-105"}`}
+                        className={`w-8 h-8 sm:w-6 sm:h-6 rounded-full border-2 transition-all ${themeId===t.id?"border-slate-600 dark:border-slate-300 scale-110":"border-transparent hover:scale-105"}`}
                         style={{ background: t.wave }}/>
                     ))}
                   </div>
@@ -1346,11 +1346,11 @@ export default function TrimPanel({
 
           {/* ‹5 */}
           <button onClick={() => jumpPlayer(-5)} disabled={!ready}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">‹5</button>
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">‹5</button>
 
           {/* ‹1 */}
           <button onClick={() => jumpPlayer(-1)} disabled={!ready}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">‹1</button>
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">‹1</button>
 
           {/* Play */}
           <button onClick={() => { const el=playerRef.current; if(!el) return; playerPlaying?el.pause():el.play(); }}
@@ -1361,11 +1361,11 @@ export default function TrimPanel({
 
           {/* 1› */}
           <button onClick={() => jumpPlayer(1)} disabled={!ready}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">1›</button>
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">1›</button>
 
           {/* 5› */}
           <button onClick={() => jumpPlayer(5)} disabled={!ready}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">5›</button>
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">5›</button>
 
           {/* Divider */}
           <div className="w-px h-5 bg-white/10 mx-1 flex-shrink-0"/>
@@ -1373,12 +1373,12 @@ export default function TrimPanel({
           {/* S / E buttons */}
           <button onClick={() => { tab==="single" ? applyStart(playerTime) : setLastRangeFromPlayer("start"); }}
             disabled={!ready}
-            className="px-2.5 py-1.5 text-xs font-bold rounded-lg text-blue-400 hover:text-white hover:bg-blue-600/40 disabled:opacity-20 font-mono transition-all"
+            className="px-3 py-2.5 text-xs font-bold rounded-lg text-blue-400 hover:text-white hover:bg-blue-600/40 disabled:opacity-20 font-mono transition-all"
             title="S — ضع البداية">S</button>
 
           <button onClick={() => { tab==="single" ? applyEnd(playerTime) : setLastRangeFromPlayer("end"); }}
             disabled={!ready}
-            className="px-2.5 py-1.5 text-xs font-bold rounded-lg text-emerald-400 hover:text-white hover:bg-emerald-600/40 disabled:opacity-20 font-mono transition-all"
+            className="px-3 py-2.5 text-xs font-bold rounded-lg text-emerald-400 hover:text-white hover:bg-emerald-600/40 disabled:opacity-20 font-mono transition-all"
             title="E — ضع النهاية">E</button>
 
           {/* Divider */}
@@ -1391,26 +1391,26 @@ export default function TrimPanel({
 
           {/* Undo */}
           <button onClick={onUndo} disabled={undoCount===0||!onUndo}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/10 disabled:opacity-20 transition-all ml-auto">
-            <RotateCcw className="w-3.5 h-3.5"/>
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/10 disabled:opacity-20 transition-all ml-auto">
+            <RotateCcw className="w-4 h-4"/>
           </button>
 
           {/* M — marker */}
           <button onClick={() => { if(ready) { addMarker(playerTime); toast.success(`🔖 ${fmt(playerTime)}`); }}}
             disabled={!ready} title="M — علامة"
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-yellow-400/70 hover:text-yellow-300 hover:bg-yellow-400/10 disabled:opacity-20 transition-all text-sm">
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-yellow-400/70 hover:text-yellow-300 hover:bg-yellow-400/10 disabled:opacity-20 transition-all text-sm">
             🔖
           </button>
 
           {/* T — split */}
           <button onClick={handleSplit} disabled={!ready} title="T — فصل هنا"
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-orange-400/70 hover:text-orange-300 hover:bg-orange-400/10 disabled:opacity-20 transition-all text-xs font-bold">
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-orange-400/70 hover:text-orange-300 hover:bg-orange-400/10 disabled:opacity-20 transition-all text-xs font-bold">
             ✂
           </button>
 
           {/* N — normalize */}
           <button onClick={handleNormalize} disabled={!ready||isNormalizing} title="N — تطبيع المستوى"
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-blue-400/70 hover:text-blue-300 hover:bg-blue-400/10 disabled:opacity-20 transition-all text-sm">
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-blue-400/70 hover:text-blue-300 hover:bg-blue-400/10 disabled:opacity-20 transition-all text-sm">
             📊
           </button>
 

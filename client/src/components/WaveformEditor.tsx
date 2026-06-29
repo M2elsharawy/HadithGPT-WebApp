@@ -1135,12 +1135,12 @@ export default function WaveformEditor({
       <div className="flex items-center gap-1.5 flex-wrap">
         <span className="text-xs text-slate-500 flex-shrink-0">تكبير:</span>
         <button onClick={zoomIn}
-          className="p-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
-          <ZoomIn className="w-3.5 h-3.5"/>
+          className="p-2.5 sm:p-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
+          <ZoomIn className="w-4 h-4 sm:w-3.5 sm:h-3.5"/>
         </button>
         <button onClick={zoomOut}
-          className="p-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
-          <ZoomOut className="w-3.5 h-3.5"/>
+          className="p-2.5 sm:p-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
+          <ZoomOut className="w-4 h-4 sm:w-3.5 sm:h-3.5"/>
         </button>
         <button onClick={zoomFit}
           className="px-2 py-1 text-xs rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
@@ -1201,7 +1201,7 @@ export default function WaveformEditor({
 
           return (
             <div
-              className="fixed z-[9999] flex items-center rounded-2xl shadow-2xl overflow-hidden select-none"
+              className="fixed z-[9999] hidden lg:flex items-center rounded-2xl shadow-2xl overflow-hidden select-none"
               style={{
                 top:  Math.max(8, topPx),
                 left: Math.max(8, Math.min(window.innerWidth - 320, leftPx - 160)),
@@ -1382,7 +1382,7 @@ export default function WaveformEditor({
 
       {/* ── Selection Action Bar — يظهر عند أي تحديد ─────────────────── */}
       {normalSel && audioBuffer && (
-        <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-900 dark:bg-slate-950 rounded-2xl border border-slate-700 shadow-lg">
+        <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 bg-slate-900 dark:bg-slate-950 rounded-2xl border border-slate-700 shadow-lg">
           {/* Time info */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="font-mono text-xs text-slate-400 tabular-nums">
@@ -1452,7 +1452,7 @@ export default function WaveformEditor({
           <button
             type="button"
             onClick={() => { stopPreviewAudio(); clearSel(); }}
-            className="w-7 h-7 flex items-center justify-center rounded-xl text-slate-500 hover:text-white hover:bg-slate-700 transition-all text-lg leading-none"
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:text-white hover:bg-slate-700 transition-all text-lg leading-none"
             title="إلغاء التحديد (Escape)"
           >
             ×
