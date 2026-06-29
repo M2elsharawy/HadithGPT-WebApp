@@ -1201,7 +1201,7 @@ export default function WaveformEditor({
 
           return (
             <div
-              className="fixed z-[9999] flex items-center rounded-2xl shadow-2xl overflow-hidden select-none"
+              className="fixed z-[9999] hidden sm:flex items-center rounded-2xl shadow-2xl overflow-hidden select-none"
               style={{
                 top:  Math.max(8, topPx),
                 left: Math.max(8, Math.min(window.innerWidth - 320, leftPx - 160)),
@@ -1382,7 +1382,7 @@ export default function WaveformEditor({
 
       {/* ── Selection Action Bar — يظهر عند أي تحديد ─────────────────── */}
       {normalSel && audioBuffer && (
-        <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-900 dark:bg-slate-950 rounded-2xl border border-slate-700 shadow-lg">
+        <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 bg-slate-900 dark:bg-slate-950 rounded-2xl border border-slate-700 shadow-lg">
           {/* Time info */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="font-mono text-xs text-slate-400 tabular-nums">

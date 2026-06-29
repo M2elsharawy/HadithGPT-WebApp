@@ -711,7 +711,7 @@ export default function TrimPanel({
             <p className="text-xs text-blue-700 dark:text-blue-300">
               اسحب لتحديد جزء · ظهر شريط الإجراءات فوق التحديد مباشرةً
             </p>
-            <span className="text-xs text-blue-400 font-mono">Alt = ⊘ snap</span>
+            <span className="hidden sm:inline text-xs text-blue-400 font-mono">Alt = ⊘ snap</span>
           </div>
           {loadState === "loading" && (
             <div className="h-28 flex items-center justify-center gap-2 text-slate-400">
@@ -780,8 +780,8 @@ export default function TrimPanel({
           )}
         </div>
 
-        {/* ── Hint + shortcuts ──────────────────────────────────────────── */}
-        <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/20">
+        {/* ── Hint + shortcuts — desktop only ──────────────────────────── */}
+        <div className="hidden sm:block px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/20">
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400 justify-center">
             {[
               ["Space","تشغيل"], ["S","بداية"], ["E","نهاية"],
