@@ -711,7 +711,7 @@ export default function TrimPanel({
             <p className="text-xs text-blue-700 dark:text-blue-300">
               اسحب لتحديد جزء · ظهر شريط الإجراءات فوق التحديد مباشرةً
             </p>
-            <span className="hidden sm:inline text-xs text-blue-400 font-mono">Alt = ⊘ snap</span>
+            <span className="hidden lg:inline text-xs text-blue-400 font-mono">Alt = ⊘ snap</span>
           </div>
           {loadState === "loading" && (
             <div className="h-28 flex items-center justify-center gap-2 text-slate-400">

@@ -1201,7 +1201,7 @@ export default function WaveformEditor({
 
           return (
             <div
-              className="fixed z-[9999] hidden sm:flex items-center rounded-2xl shadow-2xl overflow-hidden select-none"
+              className="fixed z-[9999] hidden lg:flex items-center rounded-2xl shadow-2xl overflow-hidden select-none"
               style={{
                 top:  Math.max(8, topPx),
                 left: Math.max(8, Math.min(window.innerWidth - 320, leftPx - 160)),
@@ -1452,7 +1452,7 @@ export default function WaveformEditor({
           <button
             type="button"
             onClick={() => { stopPreviewAudio(); clearSel(); }}
-            className="w-7 h-7 flex items-center justify-center rounded-xl text-slate-500 hover:text-white hover:bg-slate-700 transition-all text-lg leading-none"
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:text-white hover:bg-slate-700 transition-all text-lg leading-none"
             title="إلغاء التحديد (Escape)"
           >
             ×
