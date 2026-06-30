@@ -85,6 +85,11 @@ export interface EnhancementOptions {
   // Pipeline variant — read by AudioEnhancementEngine to select stage order.
   // Omitting this field (or setting it to "legacy") preserves existing behaviour exactly.
   pipelineVariant?: PipelineVariantId;
+
+  // Adaptive PA resonance notch filters — computed by the engine from
+  // ArtifactDiagnosticsAnalyzer when resonanceLikelihood is medium or high.
+  // Up to 3 frequencies in [100, 4000] Hz; omit to disable.
+  adaptiveNotchFreqs?: number[];
 }
 
 // ─── Artifact Diagnostics ─────────────────────────────────────────────────────
@@ -165,6 +170,10 @@ export interface EnhancementReport {
 
   // Read-only artifact classification from the input buffer (PR #20)
   artifactDiagnostics?:     ArtifactDiagnostics;
+
+  // Adaptive PA resonance notch results (Phase 1a)
+  adaptiveNotchApplied?:        boolean;
+  adaptiveNotchFrequenciesHz?:  number[];
 }
 
 export interface EnhancementResult {

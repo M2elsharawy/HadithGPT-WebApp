@@ -33,6 +33,20 @@ export class DynamicsProcessor {
       node = hp;
     }
 
+    // ── Stage 1b: Adaptive PA resonance notch filters ────────────────────────
+    // Inserted before EQ so resonance peaks are attenuated before presence/air
+    // boosts can amplify them. Q = 13 ≈ 1/3-octave bandwidth at center freq.
+    if (options.adaptiveNotchFreqs && options.adaptiveNotchFreqs.length > 0) {
+      for (const freq of options.adaptiveNotchFreqs) {
+        const notch            = offline.createBiquadFilter();
+        notch.type             = "notch";
+        notch.frequency.value  = freq;
+        notch.Q.value          = 13;
+        node.connect(notch);
+        node = notch;
+      }
+    }
+
     onProgress?.(15, "جاري تطبيق فلاتر التوازن...");
 
     // ── Stage 2: Warmth boost (low-mid) ──────────────────────────────────────
