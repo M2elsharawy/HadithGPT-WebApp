@@ -5,7 +5,7 @@ import { DynamicsProcessor }           from "./DynamicsProcessor";
 import { HumRemover }                  from "./HumRemover";
 import { LoudnessNormalizer }          from "./LoudnessNormalizer";
 import { NoiseReducer }                from "./NoiseReducer";
-import type { EnhancementOptions, EnhancementReport, EnhancementResult } from "./types";
+import type { ArtifactDiagnostics, EnhancementOptions, EnhancementReport, EnhancementResult } from "./types";
 
 // ── Presence/air boost safety ─────────────────────────────────────────────────
 // When SNR is low the noise floor is close to the speech level.  Applying
@@ -49,6 +49,28 @@ export function applyPresenceAirSafety(
   };
 }
 
+// ── Adaptive PA resonance notch selection ─────────────────────────────────────
+// Inspects ArtifactDiagnostics and returns up to 3 resonance frequencies to
+// notch when PA ringing is at least medium-confidence. Frequencies are bounded
+// to [100, 4000] Hz and de-duplicated within a 50 Hz window to avoid
+// notching the same resonance twice due to FFT bin spread.
+
+export function selectAdaptiveNotchFreqs(diagnostics: ArtifactDiagnostics): number[] {
+  if (
+    diagnostics.resonanceLikelihood !== "medium" &&
+    diagnostics.resonanceLikelihood !== "high"
+  ) return [];
+
+  const freqs: number[] = [];
+  for (const f of diagnostics.dominantGapFrequenciesHz) {
+    if (freqs.length >= 3) break;
+    if (f < 100 || f > 4000) continue;
+    if (freqs.some(x => Math.abs(x - f) < 50)) continue;
+    freqs.push(f);
+  }
+  return freqs;
+}
+
 /**
  * AudioEnhancementEngine
  *
@@ -85,6 +107,7 @@ export class AudioEnhancementEngine {
     progress(3, "جاري تحليل الصوت...");
     const before              = AudioAnalyzer.analyze(buffer);
     const artifactDiagnostics = ArtifactDiagnosticsAnalyzer.analyze(buffer);
+    const notchFreqs          = selectAdaptiveNotchFreqs(artifactDiagnostics);
 
     const appliedStages: string[] = [];
 
@@ -136,9 +159,11 @@ export class AudioEnhancementEngine {
       options.airBoostDb,
       before.snrDb,
     );
-    const dynamicsOptions: EnhancementOptions = safeBoosts.adjusted
-      ? { ...options, presenceBoostDb: safeBoosts.presenceBoostDb, airBoostDb: safeBoosts.airBoostDb }
-      : options;
+    const dynamicsOptions: EnhancementOptions = {
+      ...options,
+      ...(safeBoosts.adjusted ? { presenceBoostDb: safeBoosts.presenceBoostDb, airBoostDb: safeBoosts.airBoostDb } : {}),
+      ...(notchFreqs.length > 0 ? { adaptiveNotchFreqs: notchFreqs } : {}),
+    };
 
     // ── 6. Dynamics processing (38–82%) ──────────────────────────────────────
     progress(38, "جاري إعداد المعالجة...");
@@ -148,6 +173,7 @@ export class AudioEnhancementEngine {
       (pct, stage) => progress(38 + Math.round(pct * 0.44), stage),
     );
 
+    if (notchFreqs.length > 0)                                             appliedStages.push("adaptive_notch");
     if (options.highPassHz      > 0)                                       appliedStages.push("high_pass");
     if (options.warmthHz        > 0 && options.warmthDb        !== 0)     appliedStages.push("warmth");
     if (options.presenceBoostHz > 0 && dynamicsOptions.presenceBoostDb !== 0) appliedStages.push("presence");
@@ -196,6 +222,9 @@ export class AudioEnhancementEngine {
       appliedAirBoostDb:        safeBoosts.adjusted ? safeBoosts.airBoostDb      : undefined,
       snrDbUsedForSafety:       safeBoosts.adjusted ? before.snrDb               : undefined,
       artifactDiagnostics,
+
+      adaptiveNotchApplied:       notchFreqs.length > 0 || undefined,
+      adaptiveNotchFrequenciesHz: notchFreqs.length > 0 ? notchFreqs : undefined,
     };
 
     progress(100, "اكتملت المعالجة ✓");
