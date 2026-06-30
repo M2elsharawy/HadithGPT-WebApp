@@ -1329,7 +1329,7 @@ export default function TrimPanel({
       </div>
 
       {/* ── STICKY BOTTOM BAR ─────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40"
+      <div className="hidden lg:block fixed bottom-0 left-0 right-0 z-40"
         style={{ background:"rgba(10,15,28,0.97)", backdropFilter:"blur(16px)", borderTop:"1px solid rgba(255,255,255,0.05)" }}>
         <div className="max-w-3xl mx-auto px-4 py-2 flex items-center gap-1.5">
 
