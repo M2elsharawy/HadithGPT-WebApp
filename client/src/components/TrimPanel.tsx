@@ -781,7 +781,7 @@ export default function TrimPanel({
         </div>
 
         {/* ── Hint + shortcuts — desktop only ──────────────────────────── */}
-        <div className="hidden sm:block px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/20">
+        <div className="hidden lg:block px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/20">
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400 justify-center">
             {[
               ["Space","تشغيل"], ["S","بداية"], ["E","نهاية"],
@@ -1350,7 +1350,7 @@ export default function TrimPanel({
 
           {/* ‹1 */}
           <button onClick={() => jumpPlayer(-1)} disabled={!ready}
-            className="w-9 h-9 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">‹1</button>
+            className="w-11 h-11 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">‹1</button>
 
           {/* Play */}
           <button onClick={() => { const el=playerRef.current; if(!el) return; playerPlaying?el.pause():el.play(); }}
@@ -1361,7 +1361,7 @@ export default function TrimPanel({
 
           {/* 1› */}
           <button onClick={() => jumpPlayer(1)} disabled={!ready}
-            className="w-9 h-9 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">1›</button>
+            className="w-11 h-11 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-20 text-xs font-mono transition-all">1›</button>
 
           {/* 5› */}
           <button onClick={() => jumpPlayer(5)} disabled={!ready}

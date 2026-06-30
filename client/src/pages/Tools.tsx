@@ -3694,7 +3694,7 @@ export default function Tools() {
                     {/* × close */}
                     <button
                       onClick={() => setActiveTool(null)}
-                      className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                      className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                       title="إغلاق"
                     >
                       <X className="w-4 h-4"/>
