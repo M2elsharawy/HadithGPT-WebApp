@@ -732,6 +732,7 @@ export default function Tools() {
   const [transcriptText, setTranscriptText]         = useState("");
   const [transcriptError, setTranscriptError]       = useState("");
   const [transcriptLang, setTranscriptLang]         = useState<"ar"|"auto"|"en">("ar");
+  const [showShortcutsHelp, setShowShortcutsHelp]   = useState(false);
 
   // ── Effect export panel state (مشترك بين Clarity/Compression/EQ) ─────────
   const [showEffectExport, setShowEffectExport]   = useState(false);
@@ -1183,10 +1184,15 @@ export default function Tools() {
           break;
         case "KeyM":
           e.preventDefault();
+          if (enhancedAudioUrl) setPreviewMode(p => p === "original" ? "enhanced" : "original");
+          break;
+        case "Slash":
+          if (e.shiftKey) { e.preventDefault(); setShowShortcutsHelp(p => !p); }
           break;
         case "Escape":
-          // إغلاق الأداة النشطة
-          if (activeTool) { setActiveTool(null); e.preventDefault(); }
+          e.preventDefault();
+          if (showShortcutsHelp) { setShowShortcutsHelp(false); break; }
+          if (activeTool) setActiveTool(null);
           break;
         case "Home":
           e.preventDefault();
@@ -1200,7 +1206,7 @@ export default function Tools() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeTool, currentAudio, waveformDuration]);
+  }, [activeTool, currentAudio, waveformDuration, enhancedAudioUrl, showShortcutsHelp]);
 
   // ── EQ Preview — يشغّل 30 ثانية معالَجة مباشرةً بدون تطبيق على الملف ──────
   const eqPreviewCtxRef   = useRef<AudioContext | null>(null);
@@ -1332,6 +1338,7 @@ export default function Tools() {
 
     let finalText      = "";
     let recRunning     = true;
+    let transcribeTimeout: ReturnType<typeof setTimeout> | null = null;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (e: any) => {
@@ -1350,12 +1357,16 @@ export default function Tools() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onerror = (e: any) => {
       if (e.error === "aborted" || e.error === "no-speech") return;
-      if (e.error === "not-allowed") {
-        setTranscriptError("لم يُسمح بالوصول للميكروفون — اضغط على أيقونة القفل بجانب الرابط ثم أعد المحاولة");
-        setIsTranscribing(false);
-      } else {
-        setTranscriptError(`خطأ في التعرف: ${e.error}`);
-      }
+      const errorMsgs: Record<string, string> = {
+        "not-allowed":        "لم تُمنح صلاحية الميكروفون — افتح إعدادات المتصفح ← الموقع ← الميكروفون وأذن بالوصول",
+        "network":            "تعذّر الاتصال بخادم التعرف — تحقق من الإنترنت وأعد المحاولة",
+        "audio-capture":      "لا يوجد ميكروفون متصل بالجهاز — وصّل ميكروفوناً أو سماعة",
+        "service-not-allowed": "خدمة التعرف على الكلام غير مُفعَّلة في هذا المتصفح",
+      };
+      const msg = errorMsgs[e.error] ??
+        "تعذّر التعرف على الصوت — تأكد أن الصوت يخرج من مكبرات الصوت لا سماعة الرأس";
+      setTranscriptError(msg);
+      if (e.error === "not-allowed" || e.error === "audio-capture") setIsTranscribing(false);
     };
 
     // إعادة تشغيل التعرف تلقائياً عند انتهاء الجلسة (حد 60 ث في Chrome)
@@ -1380,11 +1391,20 @@ export default function Tools() {
       setTranscriptProgress(15);
       await audio.play();
 
-      // انتظر انتهاء الملف الصوتي
-      await new Promise<void>(resolve => {
-        audio.onended = () => resolve();
-        audio.onerror = () => resolve();
-      });
+      // انتظر انتهاء الملف الصوتي مع مهلة 120 ثانية
+      await Promise.race([
+        new Promise<void>(resolve => {
+          audio.onended = () => resolve();
+          audio.onerror = () => resolve();
+        }),
+        new Promise<void>((_, reject) => {
+          transcribeTimeout = setTimeout(
+            () => reject(new Error("timeout")),
+            120_000,
+          );
+        }),
+      ]);
+      if (transcribeTimeout) { clearTimeout(transcribeTimeout); transcribeTimeout = null; }
 
       // أعط التعرف ثانية إضافية لمعالجة الكلمات الأخيرة
       if (!abortCtrl.signal.aborted) {
@@ -1405,13 +1425,19 @@ export default function Tools() {
         setTranscriptError("لم يُستخرج نص — تأكد من السماح بالميكروفون وأن الصوت يخرج من مكبرات الصوت وليس سماعة الرأس");
       }
     } catch (err) {
+      if (transcribeTimeout) { clearTimeout(transcribeTimeout); transcribeTimeout = null; }
       recRunning = false;
       try { recognition.stop(); } catch {}
       audio.src = "";
       if ((err as Error).name !== "AbortError") {
-        const msg = err instanceof Error ? err.message : "خطأ غير معروف";
-        setTranscriptError(msg);
-        toast.error(`فشل الاستخراج: ${msg}`);
+        if ((err as Error).message === "timeout") {
+          setTranscriptError("انتهت مهلة الاستخراج (120 ثانية) — جرّب ملفاً أقصر أو تحقق من تشغيل الصوت عبر مكبرات الصوت");
+          toast.error("انتهت مهلة الاستخراج");
+        } else {
+          const msg = err instanceof Error ? err.message : "خطأ غير معروف";
+          setTranscriptError(msg);
+          toast.error(`فشل الاستخراج: ${msg}`);
+        }
       }
     } finally {
       setIsTranscribing(false);
@@ -3531,6 +3557,11 @@ export default function Tools() {
                       <RotateCcw className="w-3.5 h-3.5"/>
                     </button>
                   )}
+                  <button onClick={() => setShowShortcutsHelp(true)}
+                    title="اختصارات لوحة المفاتيح (?)"
+                    className="hidden sm:flex w-8 h-8 items-center justify-center rounded-xl text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/40 transition-all text-xs font-bold">
+                    ?
+                  </button>
                   <button onClick={() => fileInputRef.current?.click()}
                     title="فتح ملف جديد"
                     className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all">
@@ -3719,6 +3750,49 @@ export default function Tools() {
         )}
 
       </div>
+
+      {/* ── Keyboard Shortcuts Help Modal ──────────────────────────────────── */}
+      {showShortcutsHelp && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+          onClick={() => setShowShortcutsHelp(false)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md p-6 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-slate-800 dark:text-slate-200">⌨ اختصارات لوحة المفاتيح</h2>
+              <button
+                onClick={() => setShowShortcutsHelp(false)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-lg"
+              >×</button>
+            </div>
+            <div className="space-y-1.5">
+              {[
+                ["Space",   "تشغيل / إيقاف"],
+                ["→ / ←",  "تقديم / رجوع 5 ثوانٍ"],
+                ["Shift+→", "تقديم ثانية واحدة"],
+                ["Shift+←", "رجوع ثانية واحدة"],
+                ["Home",    "العودة للبداية"],
+                ["End",     "الانتقال للنهاية"],
+                ["M",       "تبديل المعاينة (أصلي ↔ محسَّن)"],
+                ["Escape",  "إغلاق الأداة النشطة"],
+                ["?",       "عرض / إخفاء هذه المساعدة"],
+              ].map(([key, desc]) => (
+                <div key={key} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                  <span className="text-sm text-slate-600 dark:text-slate-300">{desc}</span>
+                  <kbd className="font-mono text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                    {key}
+                  </kbd>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-slate-400 text-center pt-1">اضغط Escape أو انقر خارج النافذة للإغلاق</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
